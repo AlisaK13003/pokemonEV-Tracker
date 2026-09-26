@@ -1,0 +1,32 @@
+"""Application entry point."""
+
+from __future__ import annotations
+
+import logging
+import sys
+
+from PySide6.QtWidgets import QApplication
+
+from pokemon_ev_tracker.config.settings import AppSettings
+from pokemon_ev_tracker.ui.main_window import MainWindow
+
+
+def configure_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
+
+
+def main() -> int:
+    configure_logging()
+    settings = AppSettings.load_default()
+
+    app = QApplication(sys.argv)
+    window = MainWindow(settings=settings)
+    window.show()
+    return app.exec()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

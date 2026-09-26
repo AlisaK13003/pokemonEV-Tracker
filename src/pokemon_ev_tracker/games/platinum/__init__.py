@@ -1,0 +1,1 @@
+"""Pokémon Platinum game integration."""

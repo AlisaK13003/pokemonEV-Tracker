@@ -1,0 +1,2 @@
+# Runtime-only convenience mirror; pyproject.toml is the canonical dependency list.
+PySide6>=6.7

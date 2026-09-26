@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pokemon-platinum-ev-tracker"
+version = "0.1.0"
+description = "Windows desktop companion app for tracking Pokemon Platinum EVs while playing on an emulator."
+requires-python = ">=3.12"
+dependencies = [
+    "PySide6>=6.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build>=1.2",
+    "pytest>=8.2",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+pokemon-ev-tracker = "pokemon_ev_tracker.main:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pokemon_ev_tracker*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+pokemon_ev_tracker = ["assets/sprites/**/*.png", "assets/sprites/**/*.gif", "assets/sprites/**/*.webp"]
+"pokemon_ev_tracker.games.platinum" = ["data/*.json"]
+
+[tool.setuptools.data-files]
+"share/pokemon-platinum-ev-tracker" = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-p no:cacheprovider"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [
+    "build/**",
+    "dist/**",
+    "pokemon_platinum_ev_tracker.egg-info/**",
+]

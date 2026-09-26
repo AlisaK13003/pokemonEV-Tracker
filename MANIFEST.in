@@ -1,0 +1,7 @@
+include README.md
+include CONTRIBUTING.md
+include LICENSE
+include THIRD_PARTY_NOTICES.md
+recursive-include docs *.md
+include bizhawk/ev_tracker.lua
+prune tests
