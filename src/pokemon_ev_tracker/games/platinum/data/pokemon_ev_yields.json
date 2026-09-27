@@ -1,0 +1,3946 @@
+{
+  "1": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "2": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "3": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "4": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "5": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "6": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "7": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "8": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "9": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "10": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "11": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "12": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "13": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "14": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "15": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "16": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "17": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "18": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 3
+  },
+  "19": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "20": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "21": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "22": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "23": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "24": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "25": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "26": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 3
+  },
+  "27": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "28": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "29": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "30": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "31": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "32": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "33": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "34": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "35": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "36": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "37": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "38": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 1
+  },
+  "39": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "40": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "41": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "42": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "43": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "44": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "45": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "46": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "47": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "48": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "49": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "50": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "51": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "52": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "53": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "54": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "55": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "56": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "57": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "58": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "59": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "60": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "61": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "62": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 3,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "63": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "64": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "65": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "66": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "67": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "68": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "69": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "70": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "71": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "72": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "73": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "74": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "75": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "76": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 3,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "77": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "78": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "79": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "80": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "81": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "82": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "83": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "84": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "85": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "86": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "87": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "88": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "89": {
+    "hp": 1,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "90": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "91": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "92": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "93": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "94": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "95": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "96": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "97": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "98": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "99": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "100": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "101": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "102": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "103": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "104": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "105": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "106": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "107": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "108": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "109": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "110": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "111": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "112": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "113": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "114": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "115": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "116": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "117": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "118": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "119": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "120": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "121": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "122": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "123": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "124": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "125": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "126": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "127": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "128": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "129": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "130": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "131": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "132": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "133": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "134": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "135": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "136": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "137": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "138": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "139": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "140": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "141": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "142": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "143": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "144": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "145": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "146": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "147": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "148": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "149": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "150": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "151": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "152": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "153": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "154": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "155": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "156": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "157": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "158": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "159": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "160": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "161": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "162": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "163": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "164": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "165": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "166": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "167": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "168": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "169": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 3
+  },
+  "170": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "171": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "172": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "173": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "174": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "175": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "176": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "177": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "178": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "179": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "180": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "181": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "182": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "183": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "184": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "185": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "186": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "187": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "188": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "189": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 3
+  },
+  "190": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "191": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "192": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "193": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "194": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "195": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "196": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "197": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "198": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "199": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "200": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "201": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "202": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "203": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "204": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "205": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "206": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "207": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "208": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "209": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "210": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "211": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "212": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "213": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "214": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "215": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "216": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "217": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "218": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "219": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "220": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "221": {
+    "hp": 1,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "222": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "223": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "224": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "225": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "226": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "227": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "228": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "229": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "230": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "231": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "232": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "233": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "234": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "235": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "236": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "237": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "238": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "239": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "240": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "241": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "242": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "243": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "244": {
+    "hp": 1,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "245": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "246": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "247": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "248": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "249": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "250": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "251": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "252": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "253": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "254": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 3
+  },
+  "255": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "256": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "257": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "258": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "259": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "260": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "261": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "262": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "263": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "264": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "265": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "266": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "267": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "268": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "269": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "270": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "271": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "272": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "273": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "274": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "275": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "276": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "277": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "278": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "279": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "280": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "281": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "282": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "283": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "284": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "285": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "286": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "287": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "288": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "289": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "290": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "291": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "292": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "293": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "294": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "295": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "296": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "297": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "298": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "299": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "300": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "301": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "302": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "303": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "304": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "305": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "306": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 3,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "307": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "308": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "309": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "310": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "311": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "312": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "313": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "314": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "315": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "316": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "317": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "318": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "319": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "320": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "321": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "322": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "323": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "324": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "325": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "326": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "327": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "328": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "329": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "330": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "331": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "332": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "333": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "334": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "335": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "336": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "337": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "338": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "339": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "340": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "341": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "342": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "343": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "344": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "345": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "346": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "347": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "348": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "349": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "350": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "351": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "352": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "353": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "354": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "355": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "356": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "357": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "358": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "359": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "360": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "361": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "362": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "363": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "364": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "365": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "366": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "367": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "368": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "369": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "370": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "371": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "372": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "373": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "374": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "375": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "376": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 3,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "377": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 3,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "378": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "379": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "380": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "381": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "382": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "383": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "384": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "385": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "386": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "387": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "388": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "389": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "390": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "391": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "392": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "393": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "394": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "395": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "396": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "397": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "398": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "399": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "400": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "401": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "402": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "403": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "404": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "405": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "406": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "407": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "408": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "409": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "410": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "411": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "412": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "413": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "414": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "415": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "416": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "417": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "418": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "419": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "420": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "421": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "422": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "423": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "424": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "425": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "426": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "427": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "428": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "429": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "430": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "431": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "432": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "433": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "434": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "435": {
+    "hp": 2,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "436": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "437": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "438": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "439": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "440": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "441": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "442": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "443": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "444": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "445": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "446": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "447": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "448": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "449": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "450": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "451": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "452": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "453": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "454": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "455": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "456": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "457": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "458": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "459": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "460": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "461": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "462": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "463": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "464": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "465": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "466": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "467": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "468": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "469": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "470": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "471": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "472": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "473": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "474": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "475": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "476": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "477": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 1,
+    "special_attack": 0,
+    "special_defense": 2,
+    "speed": 0
+  },
+  "478": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 2
+  },
+  "479": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "480": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 2,
+    "special_attack": 0,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "481": {
+    "hp": 0,
+    "attack": 1,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 1,
+    "speed": 0
+  },
+  "482": {
+    "hp": 0,
+    "attack": 2,
+    "defense": 0,
+    "special_attack": 1,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "483": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "484": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "485": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 3,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "486": {
+    "hp": 0,
+    "attack": 3,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "487": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "488": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 3,
+    "speed": 0
+  },
+  "489": {
+    "hp": 1,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "490": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "491": {
+    "hp": 0,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 2,
+    "special_defense": 0,
+    "speed": 1
+  },
+  "492": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  },
+  "493": {
+    "hp": 3,
+    "attack": 0,
+    "defense": 0,
+    "special_attack": 0,
+    "special_defense": 0,
+    "speed": 0
+  }
+}

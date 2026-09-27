@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+import logging
+import time
+from dataclasses import replace
+
 from pokemon_ev_tracker.data_sources.base import DataSourceSnapshot, GameDataSource
+from pokemon_ev_tracker.games.platinum.battle import (
+    BattleBattler,
+    active_enemy_battlers,
+    decode_battle_battlers,
+)
 from pokemon_ev_tracker.games.platinum.decoder import PartyState, valid_checksum_count
 from pokemon_ev_tracker.games.platinum.profile import PLATINUM_PROFILE
 from pokemon_ev_tracker.transport.bizhawk_server import BizHawkDebugServer
+
+LOGGER = logging.getLogger(__name__)
 
 
 class BizHawkRamDataSource(GameDataSource):
@@ -14,6 +25,10 @@ class BizHawkRamDataSource(GameDataSource):
     def __init__(self, server: BizHawkDebugServer | None = None, profile=PLATINUM_PROFILE) -> None:
         self.server = server or BizHawkDebugServer()
         self.profile = profile
+        self._display_stream_identity = None
+        self._last_good_party_by_pid = {}
+        self._battle_payload_cache = object()
+        self._battle_battlers_cache: tuple[BattleBattler, ...] = ()
 
     @property
     def backend_name(self) -> str:
@@ -29,6 +44,28 @@ class BizHawkRamDataSource(GameDataSource):
         heartbeat = self.server.latest_heartbeat()
         party_payload = self.server.latest_party_payload()
         party_state = self._decode_party_payload(party_payload)
+        display_party_state = self._stabilize_display_party(party_state, party_payload)
+        battle_battlers = self._decode_battle_battlers(party_payload)
+        party_payload_fresh = self._party_payload_is_fresh(party_payload)
+        active_enemies = (
+            active_enemy_battlers(battle_battlers)
+            if party_payload_fresh
+            else ()
+        )
+        enemy_summary = ", ".join(
+            f"{battler.species} Lv{battler.level}" for battler in active_enemies
+        ) or "(none)"
+        active_record_indices = [
+            battler.battler_index for battler in battle_battlers if battler.active
+        ]
+        LOGGER.debug(
+            "active_enemy_battlers produced: %d - %s; party payload fresh: %s; "
+            "individually active battler indices: %s",
+            len(active_enemies),
+            enemy_summary,
+            party_payload_fresh,
+            active_record_indices,
+        )
         return DataSourceSnapshot(
             backend_name=self.backend_name,
             connected=self.server.is_connected(),
@@ -39,7 +76,139 @@ class BizHawkRamDataSource(GameDataSource):
                 "heartbeat": heartbeat,
                 "party_payload": party_payload,
                 "party_state": party_state,
+                "display_party_state": display_party_state,
+                "battle_battlers": battle_battlers,
+                "active_enemy_battlers": active_enemies,
             },
+        )
+
+    def _party_payload_is_fresh(self, party_payload) -> bool:
+        if party_payload is None:
+            return False
+        received_at = getattr(party_payload, "received_at", None)
+        if not isinstance(received_at, (int, float)):
+            return False
+        stale_after = getattr(self.server, "stale_after_seconds", 5.0)
+        return max(0.0, time.monotonic() - received_at) <= stale_after
+
+    def _decode_battle_battlers(self, party_payload) -> tuple[BattleBattler, ...]:
+        if party_payload is self._battle_payload_cache:
+            return self._battle_battlers_cache
+        self._battle_payload_cache = party_payload
+        payload = party_payload.payload if party_payload is not None else {}
+        raw_records = {
+            index: payload.get(f"battle_battler_{index}_raw_hex")
+            for index in range(4)
+        }
+        self._battle_battlers_cache = decode_battle_battlers(
+            raw_records,
+            payload.get("pointer_value"),
+            self.profile.memory_profile,
+        )
+        return self._battle_battlers_cache
+
+    def _stabilize_display_party(self, party_state: PartyState | None, party_payload) -> PartyState | None:
+        if party_state is None:
+            return None
+
+        payload = party_payload.payload if party_payload is not None else {}
+        stream_identity = tuple(
+            payload.get(key) for key in ("run_id", "core", "domain", "pointer_value")
+        )
+        if stream_identity != self._display_stream_identity:
+            self._display_stream_identity = stream_identity
+            self._last_good_party_by_pid.clear()
+
+        if not party_state.party_count_valid or party_state.party_count is None:
+            return party_state
+
+        checksummed_pids = {
+            pokemon.decoded.diagnostics.pid
+            for pokemon in party_state.pokemon
+            if pokemon.checksum_valid
+        }
+        if all(pokemon.checksum_valid for pokemon in party_state.pokemon):
+            self._last_good_party_by_pid = {
+                pid: pokemon
+                for pid, pokemon in self._last_good_party_by_pid.items()
+                if pid in checksummed_pids
+            }
+
+        display_members = []
+        invalid_slots = []
+        stale_slots = []
+        invalid_battle_slots = []
+        stale_battle_slots = []
+        for pokemon in party_state.pokemon:
+            pid = pokemon.decoded.diagnostics.pid
+            previous = self._last_good_party_by_pid.get(pid)
+            if not pokemon.checksum_valid:
+                invalid_slots.append(pokemon.slot)
+                if previous is not None:
+                    display_members.append(
+                        replace(previous, slot=pokemon.slot, sample_stale=True)
+                    )
+                    stale_slots.append(pokemon.slot)
+                continue
+
+            current = replace(pokemon, sample_stale=False, battle_stats_stale=False)
+            if not pokemon.decoded.diagnostics.battle_stats_valid:
+                invalid_battle_slots.append(pokemon.slot)
+                has_sane_previous = (
+                    previous is not None
+                    and previous.level is not None
+                    and previous.current_hp is not None
+                    and previous.max_hp is not None
+                    and previous.current_stats is not None
+                )
+                if has_sane_previous:
+                    current = replace(
+                        current,
+                        level=previous.level,
+                        current_hp=previous.current_hp,
+                        max_hp=previous.max_hp,
+                        current_stats=previous.current_stats,
+                        battle_stats_stale=True,
+                    )
+                    stale_battle_slots.append(pokemon.slot)
+                else:
+                    current = replace(
+                        current,
+                        level=None,
+                        current_hp=None,
+                        max_hp=None,
+                        current_stats=None,
+                        battle_stats_stale=True,
+                    )
+                self._last_good_party_by_pid[pid] = current
+            else:
+                self._last_good_party_by_pid[pid] = current
+            display_members.append(current)
+
+        warnings = []
+        if invalid_slots:
+            slots = ", ".join(str(slot) for slot in invalid_slots)
+            if stale_slots:
+                warnings.append(
+                    f"RAM checksum failed for slot(s) {slots}; showing the last valid matching-PID sample."
+                )
+            else:
+                warnings.append(f"Waiting for checksum-valid RAM data in slot(s) {slots}.")
+        if invalid_battle_slots:
+            slots = ", ".join(str(slot) for slot in invalid_battle_slots)
+            if stale_battle_slots:
+                warnings.append(
+                    f"Battle stats failed validation in slot(s) {slots}; keeping last sane level/HP and stats."
+                )
+            else:
+                warnings.append(
+                    f"Battle stats failed validation in slot(s) {slots}; level/HP withheld."
+                )
+
+        return replace(
+            party_state,
+            pokemon=tuple(display_members),
+            live_read_warning=" ".join(warnings) or None,
         )
 
     def _decode_party_payload(self, party_payload) -> PartyState | None:

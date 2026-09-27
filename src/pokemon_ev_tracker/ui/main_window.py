@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from datetime import datetime
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QKeySequence, QMovie, QShortcut
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -24,11 +26,14 @@ from pokemon_ev_tracker.core.ev_changes import EVChangeTracker
 from pokemon_ev_tracker.core.ev_targets import EVTargetStore
 from pokemon_ev_tracker.data_sources.bizhawk import BizHawkRamDataSource
 from pokemon_ev_tracker.games.platinum.decoder import nickname_is_default
+from pokemon_ev_tracker.games.platinum.ev_yields import format_ev_yield
 from pokemon_ev_tracker.games.platinum.items import get_gen4_item_hint
 from pokemon_ev_tracker.games.platinum.profile import PLATINUM_PROFILE
 from pokemon_ev_tracker.pokemon.gen4.structure import (
     HELD_ITEM_BOX_DATA_OFFSET,
     HELD_ITEM_RECORD_OFFSET,
+    IVS_BOX_DATA_OFFSET,
+    IVS_RECORD_OFFSET,
 )
 from pokemon_ev_tracker.ui.backend_status import BackendStatusWidget
 from pokemon_ev_tracker.ui.ev_change_log import EvChangeLogWidget
@@ -39,12 +44,15 @@ from pokemon_ev_tracker.ui.item_sprite_loader import (
     item_sprite_path,
     item_sprite_slug,
 )
+from pokemon_ev_tracker.ui.opponent_panel import CurrentOpponentPanel
 from pokemon_ev_tracker.ui.party_card import SECONDARY_TEXT_COLOR, PartyCard, PartyGrid
 from pokemon_ev_tracker.ui.sprite_loader import (
     get_animated_sprite_size,
     get_static_sprite,
     resolve_sprite_asset,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _format_optional_hex(value: int | None) -> str:
@@ -64,7 +72,9 @@ class MainWindow(QMainWindow):
         self.ram_data_source = data_source or BizHawkRamDataSource(profile=self.profile)
         self.ev_target_store = target_store or EVTargetStore()
         self.compact_mode = False
+        self.tracker_view = "training"
         self._compact_member_count = -1
+        self._compact_opponent_count = -1
         self._party_layout_slots: tuple[int, ...] = ()
         self._ev_history_records: list[tuple[str, str]] = []
         self._pre_compact_tab_index = 0
@@ -76,6 +86,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"{self.profile.display_name} EV Tracker")
         self.resize(1100, 760)
         self._build_ui()
+        self.set_tracker_view(settings.tracker_view, persist=False)
         self._geometry_save_timer = QTimer(self)
         self._geometry_save_timer.setSingleShot(True)
         self._geometry_save_timer.setInterval(450)
@@ -142,13 +153,38 @@ class MainWindow(QMainWindow):
         self.tracker_layout.setSpacing(7)
         self.tracker_connection_message = QLabel("Waiting for BizHawk / EmuHawk RAM connection...")
         self.tracker_connection_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.tracker_connection_message.setWordWrap(True)
         self.tracker_connection_message.setMinimumHeight(34)
         self.tracker_connection_message.setStyleSheet(f"color: {SECONDARY_TEXT_COLOR};")
         self.tracker_layout.addWidget(self.tracker_connection_message)
+        self.current_opponent_panel = CurrentOpponentPanel(tracker_page)
+        self.tracker_layout.addWidget(self.current_opponent_panel)
 
+        party_header = QWidget()
+        party_header_layout = QHBoxLayout(party_header)
+        party_header_layout.setContentsMargins(0, 0, 0, 0)
+        party_header_layout.setSpacing(6)
         party_heading = QLabel("Party")
         party_heading.setStyleSheet("font-size: 16px; font-weight: 600;")
-        self.tracker_layout.addWidget(party_heading)
+        party_header_layout.addWidget(party_heading)
+        party_header_layout.addStretch(1)
+        self.tracker_view_buttons = {}
+        self.tracker_view_button_group = QButtonGroup(self)
+        self.tracker_view_button_group.setExclusive(True)
+        for view, label in (("training", "Training View"), ("stats", "Party Stats")):
+            button = QPushButton(label)
+            button.setCheckable(True)
+            button.setStyleSheet(
+                "QPushButton:checked { background-color: palette(highlight); "
+                "color: palette(highlighted-text); }"
+            )
+            self.tracker_view_button_group.addButton(button)
+            self.tracker_view_buttons[view] = button
+            party_header_layout.addWidget(button)
+            button.clicked.connect(
+                lambda _checked=False, selected_view=view: self.set_tracker_view(selected_view)
+            )
+        self.tracker_layout.addWidget(party_header)
         self.tracker_party_cards = {}
         self.party_card_widgets = {}
         for slot in range(1, 7):
@@ -211,6 +247,28 @@ class MainWindow(QMainWindow):
     def set_compact_mode(self, enabled: bool) -> None:
         self._set_compact_mode(bool(enabled), persist=True)
 
+    def set_tracker_view(self, view: str, persist: bool = True) -> None:
+        if view not in {"training", "stats"}:
+            raise ValueError("Tracker view must be 'training' or 'stats'.")
+        self.tracker_view = view
+        for key, button in self.tracker_view_buttons.items():
+            button.blockSignals(True)
+            button.setChecked(key == view)
+            button.blockSignals(False)
+        training_visible = view == "training"
+        for card in self.tracker_party_cards.values():
+            card["training_content"].setVisible(training_visible)
+            card["stats_content"].setVisible(not training_visible)
+        self.ev_change_log.setVisible(training_visible)
+        if self.compact_mode:
+            QTimer.singleShot(
+                0,
+                lambda: self._resize_compact_window(max(self._compact_member_count, 1)),
+            )
+        if persist:
+            self.settings.tracker_view = view
+            self.settings.save_default()
+
     def _set_compact_mode(self, enabled: bool, persist: bool = True, initial: bool = False) -> None:
         if enabled == self.compact_mode and not initial:
             return
@@ -226,7 +284,8 @@ class MainWindow(QMainWindow):
             self.main_tabs.tabBar().hide()
             self.tracker_title.hide()
             self.backend_status.details_widget.hide()
-            self.ev_change_list.setMaximumHeight(82)
+            self.ev_change_list.setMinimumHeight(112)
+            self.ev_change_list.setMaximumHeight(140)
             self._root_layout.setContentsMargins(4, 3, 4, 3)
             self._root_layout.setSpacing(3)
             self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
@@ -238,7 +297,8 @@ class MainWindow(QMainWindow):
             self.main_tabs.tabBar().show()
             self.tracker_title.show()
             self.backend_status.details_widget.show()
-            self.ev_change_list.setMaximumHeight(160)
+            self.ev_change_list.setMinimumHeight(150)
+            self.ev_change_list.setMaximumHeight(230)
             self._root_layout.setContentsMargins(8, 7, 8, 7)
             self._root_layout.setSpacing(6)
             self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
@@ -260,7 +320,8 @@ class MainWindow(QMainWindow):
         columns = min(max(int(member_count), 1), 3)
         width = max(320, 250 * columns + 24)
         rows = 1 if member_count <= 3 else 2
-        height = 120 + rows * 300
+        card_height = 300 if self.tracker_view == "training" else 255
+        height = 120 + rows * card_height + self.current_opponent_panel.sizeHint().height()
         self.resize(width, height)
 
     def _current_window_geometry(self) -> tuple[int, int, int, int]:
@@ -291,7 +352,10 @@ class MainWindow(QMainWindow):
         snapshot = self.ram_data_source.snapshot()
         heartbeat = snapshot.details.get("heartbeat")
         party_state = snapshot.details.get("party_state")
+        display_party_state = snapshot.details.get("display_party_state", party_state)
         party_payload = snapshot.details.get("party_payload")
+        battle_battlers = snapshot.details.get("battle_battlers", ())
+        active_enemies = snapshot.details["active_enemy_battlers"]
         age = max(0.0, time.monotonic() - heartbeat.received_at) if heartbeat else None
         self.backend_status.set_connection(
             snapshot.backend_name, snapshot.connected, heartbeat, age
@@ -300,8 +364,29 @@ class MainWindow(QMainWindow):
         self.available_domains_label.setText(
             "Available domains: " + (", ".join(map(str, domains)) if domains else "--")
         )
-        self._refresh_ram_party_debug(party_state, party_payload)
-        self._refresh_tracker_party(snapshot.connected, party_state)
+        self._refresh_ram_party_debug(
+            party_state,
+            party_payload,
+            battle_battlers,
+            active_enemies,
+        )
+        self._refresh_tracker_party(snapshot.connected, display_party_state)
+        opponent_summary = ", ".join(
+            f"{battler.species} Lv{battler.level}" for battler in active_enemies
+        ) or "(none)"
+        LOGGER.debug(
+            "MainWindow opponent update: %d - %s",
+            len(active_enemies),
+            opponent_summary,
+        )
+        self.current_opponent_panel.set_opponents(active_enemies)
+        opponent_count = len(active_enemies)
+        if self.compact_mode and opponent_count != self._compact_opponent_count:
+            self._compact_opponent_count = opponent_count
+            QTimer.singleShot(
+                0,
+                lambda: self._resize_compact_window(max(self._compact_member_count, 1)),
+            )
         if snapshot.connected:
             self._record_ev_changes(party_state)
 
@@ -339,15 +424,27 @@ class MainWindow(QMainWindow):
             message = party_state.error or "Waiting for valid party RAM data..."
         elif party_state.error and not party_state.pokemon:
             message = party_state.error
+        elif getattr(party_state, "live_read_warning", None) and not members:
+            message = party_state.live_read_warning
         elif not members:
             message = "No Pokémon in party."
         if message is not None:
             self.tracker_connection_message.setText(message)
+            self.tracker_connection_message.setStyleSheet(
+                "color: #d8ba79;" if getattr(party_state, "live_read_warning", None) else
+                f"color: {SECONDARY_TEXT_COLOR};"
+            )
             self.tracker_connection_message.show()
             self.party_grid.hide()
             return
 
-        self.tracker_connection_message.hide()
+        warning = getattr(party_state, "live_read_warning", None)
+        if warning:
+            self.tracker_connection_message.setText(warning)
+            self.tracker_connection_message.setStyleSheet("color: #d8ba79;")
+            self.tracker_connection_message.show()
+        else:
+            self.tracker_connection_message.hide()
         self.party_grid.show()
         for pokemon in members:
             card = self.tracker_party_cards[pokemon.slot]
@@ -367,11 +464,61 @@ class MainWindow(QMainWindow):
                 f"HP {pokemon.current_hp if pokemon.current_hp is not None else '--'} / "
                 f"{pokemon.max_hp if pokemon.max_hp is not None else '--'}"
             )
-            card["checksum"].setText(
-                "✓ RAM data valid" if pokemon.checksum_valid else "Warning: RAM checksum invalid"
-            )
+            card["nature"].setText(f"Nature: {pokemon.nature_name}")
+            ability_name = pokemon.ability_name or f"Unknown #{pokemon.ability_id}"
+            card["ability"].setText(f"Ability: {ability_name}")
+            stats = pokemon.current_stats
+            current_values = {
+                "hp": stats.max_hp if stats is not None else None,
+                "attack": stats.attack if stats is not None else None,
+                "defense": stats.defense if stats is not None else None,
+                "special_attack": stats.special_attack if stats is not None else None,
+                "special_defense": stats.special_defense if stats is not None else None,
+                "speed": stats.speed if stats is not None else None,
+            }
+            iv_values = {
+                "hp": pokemon.hp_iv,
+                "attack": pokemon.attack_iv,
+                "defense": pokemon.defense_iv,
+                "special_attack": pokemon.special_attack_iv,
+                "special_defense": pokemon.special_defense_iv,
+                "speed": pokemon.speed_iv,
+            }
+            for stat, value_label in card["stat_values"].items():
+                value = current_values[stat]
+                value_label.setText(str(value) if value is not None else "--")
+                card["iv_values"][stat].setText(
+                    str(iv_values[stat]) if pokemon.checksum_valid else "--"
+                )
+                if stat == "hp":
+                    color = "#d7dce2"
+                elif stat == pokemon.nature_increased_stat:
+                    color = "#df8585"
+                elif stat == pokemon.nature_decreased_stat:
+                    color = "#86aee0"
+                else:
+                    color = "#d7dce2"
+                card["stat_names"][stat].setStyleSheet(f"color: {color};")
+                value_label.setStyleSheet(f"color: {color};")
+            if not pokemon.checksum_valid:
+                card["nature"].setText("Nature: --")
+                card["ability"].setText("Ability: --")
+            if pokemon.sample_stale and pokemon.battle_stats_stale:
+                card["checksum"].setText("Showing last valid record; level/HP may be stale")
+            elif pokemon.sample_stale:
+                card["checksum"].setText("Warning: showing last valid RAM sample")
+            elif pokemon.battle_stats_stale and pokemon.level is None:
+                card["checksum"].setText("Warning: invalid level/HP/stats withheld")
+            elif pokemon.battle_stats_stale:
+                card["checksum"].setText("Warning: keeping last sane level/HP/stats")
+            else:
+                card["checksum"].setText(
+                    "✓ RAM data valid" if pokemon.checksum_valid else "Warning: RAM checksum invalid"
+                )
             card["checksum"].setStyleSheet(
-                "font-size: 9px; color: #79b58e;"
+                "font-size: 9px; color: #d8ba79;"
+                if pokemon.sample_stale or pokemon.battle_stats_stale
+                else "font-size: 9px; color: #79b58e;"
                 if pokemon.checksum_valid
                 else "font-size: 10px; color: #d18888; font-weight: 600;"
             )
@@ -571,7 +718,8 @@ class MainWindow(QMainWindow):
                 f"{timestamp}  {name:<24} {stat_name:<15} "
                 f"{change.before:>3} -> {change.after:<3}  {change.delta:+d}"
             )
-            self._ev_history_records.append((full, f"{change.delta:+d} {stat_name}"))
+            compact = f"{change.delta:+d} {stat_name} — {name}"
+            self._ev_history_records.append((full, compact))
             self._highlight_ev_change(change.slot, change.stat)
         del self._ev_history_records[: -self._ev_history_limit]
         self._render_ev_history()
@@ -593,10 +741,12 @@ class MainWindow(QMainWindow):
         self._ev_history_records.clear()
         self._render_ev_history()
 
-    def _refresh_ram_party_debug(self, party_state, party_payload) -> None:
+    def _refresh_ram_party_debug(
+        self, party_state, party_payload, battle_battlers=(), active_enemies=()
+    ) -> None:
         if party_state is None:
             self.ram_party_summary_label.setText("Party count: --")
-            self.ram_party_details.setPlainText("Waiting for party memory payload.")
+            self._set_ram_party_debug_text("Waiting for party memory payload.")
             return
         count = str(party_state.party_count) if party_state.party_count is not None else "--"
         self.ram_party_summary_label.setText(
@@ -623,6 +773,54 @@ class MainWindow(QMainWindow):
                     "",
                 )
             )
+            lines.append("Battle Battlers (candidate offsets/fields; validate in gameplay):")
+            lines.append(f"Base pointer: {payload.get('pointer_value', '--')}")
+            for battler in battle_battlers:
+                species_id = battler.species_id if battler.species_id is not None else "--"
+                level = battler.level if battler.level is not None else "--"
+                hp = (
+                    f"{battler.current_hp} / {battler.max_hp or '?'}"
+                    if battler.current_hp is not None
+                    else "-- / ?"
+                )
+                stats = ", ".join(
+                    f"{name}={value if value is not None else '--'}"
+                    for name, value in battler.stats.items()
+                )
+                lines.extend(
+                    (
+                        f"Battler {battler.battler_index} - {battler.role}",
+                        f"Relative offset: 0x{battler.relative_offset:05X}",
+                        f"Record address: {_format_optional_hex(battler.address)}",
+                        f"Species ID: {species_id}; species: {battler.species}",
+                        f"Level: {level}; current HP (diagnostic): {hp}",
+                        f"Max HP candidate at +0x4E (diagnostic): {battler.max_hp}",
+                        f"HP region raw (+0x48..+0x53): {battler.hp_region_raw_hex or '--'}",
+                        f"Candidate stats: {stats}",
+                        f"Candidate PID: {_format_optional_hex(battler.pid)}",
+                        (
+                            f"Candidate ability ID: {battler.ability_id if battler.ability_id is not None else '--'}; "
+                            f"candidate held item ID: {battler.held_item_id if battler.held_item_id is not None else '--'}"
+                        ),
+                        f"Candidate nickname bytes: {battler.nickname_raw_hex or '--'}",
+                        f"Validation state: {battler.validation_state.value}"
+                        + (f" ({battler.validation_reason})" if battler.validation_reason else ""),
+                        f"Raw record: {battler.raw_hex or '--'}",
+                        "",
+                    )
+                )
+            lines.append("Currently Battling:")
+            if active_enemies:
+                for battler in active_enemies:
+                    lines.append(
+                        f"Enemy {1 if battler.battler_index == 1 else 2}: "
+                        f"{battler.species}, Lv. {battler.level}, HP "
+                        f"{battler.current_hp} / {battler.max_hp or '?'}; "
+                        f"Base EV Yield: {format_ev_yield(battler.species_id)}"
+                    )
+            else:
+                lines.append("No validated active enemy battlers.")
+            lines.append("")
         if party_state.error:
             lines.append(
                 f"{'Note' if party_state.party_count_valid else 'Error'}: {party_state.error}"
@@ -649,6 +847,31 @@ class MainWindow(QMainWindow):
                     ),
                     f"Permutation: {diag.block_order} (index {diag.shuffle_index})",
                     f"Species ID: {pokemon.species_id}",
+                    f"Nature ID: {pokemon.nature_id}",
+                    f"Nature: {pokemon.nature_name}",
+                    f"Nature increased stat: {pokemon.nature_increased_stat or '--'}",
+                    f"Nature decreased stat: {pokemon.nature_decreased_stat or '--'}",
+                    f"Ability slot: {pokemon.ability_slot or '--'}",
+                    f"Ability ID: {pokemon.ability_id}",
+                    f"Ability name: {pokemon.ability_name or '--'}",
+                    "IVs:",
+                    f"  HP: {pokemon.hp_iv}",
+                    f"  Attack: {pokemon.attack_iv}",
+                    f"  Defense: {pokemon.defense_iv}",
+                    f"  Sp. Atk: {pokemon.special_attack_iv}",
+                    f"  Sp. Def: {pokemon.special_defense_iv}",
+                    f"  Speed: {pokemon.speed_iv}",
+                    (
+                        "IV packed word: "
+                        f"0x{pokemon.decoded.packed_ivs:08X} "
+                        f"(record +0x{IVS_RECORD_OFFSET:02X}, "
+                        f"decrypted box data +0x{IVS_BOX_DATA_OFFSET:02X})"
+                    ),
+                    (
+                        "IV packed flags: "
+                        f"egg={str(pokemon.decoded.ivs.is_egg).lower()}, "
+                        f"has_nickname={str(pokemon.decoded.ivs.has_nickname).lower()}"
+                    ),
                     f"Held item ID: {pokemon.held_item_id}",
                     f"Held item name: {pokemon.held_item_name or 'None'}",
                     f"Held item sprite slug: {item_sprite_slug(pokemon.held_item_name) or '--'}",
@@ -669,6 +892,17 @@ class MainWindow(QMainWindow):
                         f"Current HP: {pokemon.current_hp if pokemon.current_hp is not None else '--'} / "
                         f"{pokemon.max_hp if pokemon.max_hp is not None else '--'}"
                     ),
+                    "Current stats from party tail:",
+                    f"  Max HP: {pokemon.decoded.current_stats.max_hp}",
+                    f"  Attack: {pokemon.decoded.current_stats.attack}",
+                    f"  Defense: {pokemon.decoded.current_stats.defense}",
+                    f"  Sp. Atk: {pokemon.decoded.current_stats.special_attack}",
+                    f"  Sp. Def: {pokemon.decoded.current_stats.special_defense}",
+                    f"  Speed: {pokemon.decoded.current_stats.speed}",
+                    f"Battle stats raw (0x88-0x9B): {diag.battle_stats_raw_hex}",
+                    f"Battle stats decrypted (0x88-0x9B): {diag.battle_stats_decrypted_hex}",
+                    f"Battle stats valid: {str(diag.battle_stats_valid).lower()}",
+                    f"Battle stats validation: {diag.battle_stats_error or 'OK'}",
                 )
             )
             if pokemon.checksum_valid:
@@ -684,8 +918,25 @@ class MainWindow(QMainWindow):
         if not party_state.pokemon and not party_state.error:
             lines.append("No occupied party slots reported.")
         text = "\n".join(lines)
-        if text != self.ram_party_details.toPlainText():
-            self.ram_party_details.setPlainText(text)
+        self._set_ram_party_debug_text(text)
+
+    def _set_ram_party_debug_text(self, text: str) -> None:
+        editor = self.ram_party_details
+        if text == editor.toPlainText():
+            return
+
+        vertical = editor.verticalScrollBar()
+        horizontal = editor.horizontalScrollBar()
+        vertical_position = vertical.value()
+        was_at_bottom = vertical.maximum() > 0 and vertical_position >= vertical.maximum()
+        horizontal_position = horizontal.value()
+
+        editor.setPlainText(text)
+
+        vertical = editor.verticalScrollBar()
+        horizontal = editor.horizontalScrollBar()
+        vertical.setValue(vertical.maximum() if was_at_bottom else vertical_position)
+        horizontal.setValue(horizontal_position)
 
     def closeEvent(self, event) -> None:
         self.refresh_timer.stop()

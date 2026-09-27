@@ -87,6 +87,10 @@ class PartyCard(QGroupBox):
         identity.addLayout(details, 1)
         layout.addLayout(identity)
 
+        training_content = QWidget(self)
+        training_layout = QVBoxLayout(training_content)
+        training_layout.setContentsMargins(0, 2, 0, 0)
+        training_layout.setSpacing(2)
         ev_layout = QGridLayout()
         ev_layout.setContentsMargins(0, 2, 0, 0)
         ev_layout.setHorizontalSpacing(5)
@@ -129,11 +133,11 @@ class PartyCard(QGroupBox):
             bars[key] = bar
             rows[key] = row_widget
             timers[key] = timer
-        layout.addLayout(ev_layout)
+        training_layout.addLayout(ev_layout)
 
         total = QLabel("Total EVs: -- / 510")
         total.setStyleSheet("font-weight: 600; color: #d7dce2;")
-        layout.addWidget(total)
+        training_layout.addWidget(total)
         total_bar = QProgressBar()
         total_bar.setRange(0, 510)
         total_bar.setTextVisible(False)
@@ -142,10 +146,10 @@ class PartyCard(QGroupBox):
             "QProgressBar { border: 0; background: palette(alternate-base); }"
             "QProgressBar::chunk { background: palette(highlight); }"
         )
-        layout.addWidget(total_bar)
+        training_layout.addWidget(total_bar)
         target_summary = QLabel("No EV target set")
         target_summary.setStyleSheet(f"font-size: 10px; color: {SECONDARY_TEXT_COLOR};")
-        layout.addWidget(target_summary)
+        training_layout.addWidget(target_summary)
         controls = QHBoxLayout()
         controls.addStretch(1)
         edit_button = QPushButton("Edit Target")
@@ -153,11 +157,51 @@ class PartyCard(QGroupBox):
         clear_button.setEnabled(False)
         controls.addWidget(edit_button)
         controls.addWidget(clear_button)
-        layout.addLayout(controls)
+        training_layout.addLayout(controls)
+        layout.addWidget(training_content)
+
+        stats_content = QWidget(self)
+        stats_layout = QVBoxLayout(stats_content)
+        stats_layout.setContentsMargins(2, 3, 2, 0)
+        stats_layout.setSpacing(2)
+        nature = QLabel("Nature: --")
+        nature.setStyleSheet("color: #d7dce2; font-weight: 600;")
+        ability = QLabel("Ability: --")
+        ability.setStyleSheet("color: #d7dce2;")
+        stats_layout.addWidget(nature)
+        stats_layout.addWidget(ability)
+        stats_grid = QGridLayout()
+        stats_grid.setContentsMargins(0, 2, 0, 0)
+        stats_grid.setHorizontalSpacing(7)
+        stats_grid.setVerticalSpacing(1)
+        stats_grid.addWidget(QLabel("Stat"), 0, 0)
+        stats_grid.addWidget(QLabel("Value"), 0, 1, Qt.AlignmentFlag.AlignRight)
+        stats_grid.addWidget(QLabel("IV"), 0, 2, Qt.AlignmentFlag.AlignRight)
+        stat_values, iv_values, stat_names = {}, {}, {}
+        for row, (key, label_text) in enumerate(EV_STAT_LABELS, start=1):
+            stat_name = QLabel(label_text)
+            stat_name.setStyleSheet(f"color: {EV_STAT_LABEL_COLOR};")
+            stat_value = QLabel("--")
+            stat_value.setAlignment(Qt.AlignmentFlag.AlignRight)
+            iv_value = QLabel("--")
+            iv_value.setAlignment(Qt.AlignmentFlag.AlignRight)
+            iv_value.setStyleSheet(f"color: {SECONDARY_TEXT_COLOR};")
+            stats_grid.addWidget(stat_name, row, 0)
+            stats_grid.addWidget(stat_value, row, 1)
+            stats_grid.addWidget(iv_value, row, 2)
+            stat_names[key] = stat_name
+            stat_values[key] = stat_value
+            iv_values[key] = iv_value
+        stats_layout.addLayout(stats_grid)
+        stats_layout.addStretch(1)
+        stats_content.hide()
+        layout.addWidget(stats_content)
 
         self.fields: dict[str, object] = {
             "slot": slot,
             "widget": self,
+            "training_content": training_content,
+            "stats_content": stats_content,
             "sprite": sprite,
             "sprite_species_id": None,
             "sprite_size": 64,
@@ -186,6 +230,11 @@ class PartyCard(QGroupBox):
             "target_summary": target_summary,
             "edit_target_button": edit_button,
             "clear_target_button": clear_button,
+            "nature": nature,
+            "ability": ability,
+            "stat_names": stat_names,
+            "stat_values": stat_values,
+            "iv_values": iv_values,
         }
         self.hide()
 

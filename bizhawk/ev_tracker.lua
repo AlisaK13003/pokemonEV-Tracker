@@ -13,6 +13,8 @@ local PLATINUM_PARTY_COUNT_OFFSET = 0xD090
 local PLATINUM_PARTY_RECORDS_OFFSET = 0xD094
 local PARTY_POKEMON_SIZE = 236
 local PARTY_BYTES = 4 + (6 * PARTY_POKEMON_SIZE)
+local BATTLE_BATTLER_SIZE = 0xC0
+local BATTLE_BATTLER_OFFSETS = {0x54598, 0x54658, 0x54718, 0x547D8}
 
 local socket = nil
 pcall(function()
@@ -240,6 +242,7 @@ local function party_memory_message(frame, domain)
     local party_count = nil
     local raw_party = nil
     local candidate_diagnostics = {}
+    local battle_battler_fields = {}
     local party_count_valid = false
 
     if pointer_value ~= nil then
@@ -250,6 +253,16 @@ local function party_memory_message(frame, domain)
         party_count = read_u32_le(domain, party_offset)
         party_count_valid = party_count ~= nil and party_count >= 0 and party_count <= 6
         raw_party = read_bytes_hex(domain, party_offset, PARTY_BYTES)
+        for index, relative_offset in ipairs(BATTLE_BATTLER_OFFSETS) do
+            local battler_index = index - 1
+            local record_address = pointer_value + relative_offset
+            local record_offset = address_to_domain_offset(record_address)
+            local raw_record = read_bytes_hex(domain, record_offset, BATTLE_BATTLER_SIZE)
+            local prefix = string.format("battle_battler_%d_", battler_index)
+            table.insert(battle_battler_fields, {prefix .. "relative_offset", string.format("0x%X", relative_offset)})
+            table.insert(battle_battler_fields, {prefix .. "address", string.format("0x%08X", record_address)})
+            table.insert(battle_battler_fields, {prefix .. "raw_hex", raw_record})
+        end
         candidate_diagnostics[1] = string.format(
             "count relative=0x%X address=0x%08X offset=0x%08X count=%s valid=%s",
             PLATINUM_PARTY_COUNT_OFFSET,
@@ -267,7 +280,7 @@ local function party_memory_message(frame, domain)
         )
     end
 
-    local message = json_object({
+    local message_fields = {
         {"type", "party_memory"},
         {"run_id", run_id},
         {"frame", frame},
@@ -287,7 +300,11 @@ local function party_memory_message(frame, domain)
         {"party_count_valid", party_count_valid},
         {"pokemon_size", PARTY_POKEMON_SIZE},
         {"raw_party_hex", raw_party},
-    })
+    }
+    for _, field in ipairs(battle_battler_fields) do
+        table.insert(message_fields, field)
+    end
+    local message = json_object(message_fields)
     return message
 end
 

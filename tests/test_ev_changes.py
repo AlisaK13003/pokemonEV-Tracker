@@ -55,3 +55,16 @@ def test_ev_change_tracker_skips_invalid_checksums_and_invalid_party_state() -> 
 
     assert tracker.observe(_party(_member(1, 1, evs, valid=False))) == ()
     assert tracker.observe(SimpleNamespace(party_count_valid=False, pokemon=())) == ()
+
+
+def test_ev_change_tracker_skips_stale_display_samples() -> None:
+    tracker = EVChangeTracker()
+    initial = {"hp": 0, "attack": 0, "defense": 0, "special_attack": 0, "special_defense": 0, "speed": 0}
+    changed = {**initial, "attack": 5}
+    valid = _member(1, 1, initial)
+    stale = _member(1, 1, changed)
+    stale.sample_stale = True
+
+    assert tracker.observe(_party(valid)) == ()
+    assert tracker.observe(_party(stale)) == ()
+    assert [change.delta for change in tracker.observe(_party(_member(1, 1, changed)))] == [5]

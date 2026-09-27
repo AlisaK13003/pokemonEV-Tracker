@@ -12,12 +12,17 @@ from pokemon_ev_tracker.pokemon.gen4.crypto import (
     shuffle_index,
     xor_words,
 )
+from pokemon_ev_tracker.pokemon.gen4.ivs import IndividualValues, decode_individual_values
+from pokemon_ev_tracker.pokemon.gen4.nature import nature_from_pid
 
 PARTY_POKEMON_SIZE = 236
 POKEMON_HEADER_SIZE = 0x08
 HELD_ITEM_BOX_DATA_OFFSET = 0x02
 HELD_ITEM_RECORD_OFFSET = POKEMON_HEADER_SIZE + HELD_ITEM_BOX_DATA_OFFSET
+ABILITY_BOX_DATA_OFFSET = 0x0D
+IVS_RECORD_OFFSET = 0x38
 # Published PKM offsets include this header; decrypt_box_data returns bytes after it.
+IVS_BOX_DATA_OFFSET = IVS_RECORD_OFFSET - POKEMON_HEADER_SIZE
 NICKNAME_RECORD_OFFSET = 0x48
 NICKNAME_BOX_DATA_OFFSET = NICKNAME_RECORD_OFFSET - POKEMON_HEADER_SIZE
 NICKNAME_FIELD_SIZE = 0x16
@@ -82,6 +87,20 @@ class PokemonDiagnostics:
     shuffle_index: int
     block_order: str
     sanity_bytes: str
+    battle_stats_raw_hex: str
+    battle_stats_decrypted_hex: str
+    battle_stats_valid: bool
+    battle_stats_error: str | None
+
+
+@dataclass(frozen=True)
+class CurrentStats:
+    max_hp: int
+    attack: int
+    defense: int
+    speed: int
+    special_attack: int
+    special_defense: int
 
 
 @dataclass(frozen=True)
@@ -105,6 +124,14 @@ class DecodedPokemon:
     level: int | None
     current_hp: int | None
     max_hp: int | None
+    nature_id: int
+    nature_name: str
+    nature_increased_stat: str | None
+    nature_decreased_stat: str | None
+    ability_id: int
+    packed_ivs: int
+    ivs: IndividualValues
+    current_stats: CurrentStats
     nickname: str | None
     nickname_diagnostics: NicknameDiagnostics
     diagnostics: PokemonDiagnostics
@@ -122,13 +149,20 @@ def decode_party_pokemon(
     decrypted = decrypt_box_data(data[0x08 : 0x08 + BOX_DATA_SIZE], pid, checksum)
     calculated_checksum = calculate_checksum(decrypted)
     checksum_valid = calculated_checksum == checksum
-    battle_stats = xor_words(data[0x88:0x9C], pid)
+    battle_stats_raw = data[0x88:0x9C]
+    battle_stats = xor_words(battle_stats_raw, pid)
 
     species_id = int.from_bytes(decrypted[0x00:0x02], "little")
     held_item_id = int.from_bytes(
         decrypted[HELD_ITEM_BOX_DATA_OFFSET : HELD_ITEM_BOX_DATA_OFFSET + 2], "little"
     )
     experience = int.from_bytes(decrypted[0x08:0x0C], "little")
+    nature = nature_from_pid(pid)
+    ability_id = decrypted[ABILITY_BOX_DATA_OFFSET]
+    packed_ivs = int.from_bytes(
+        decrypted[IVS_BOX_DATA_OFFSET : IVS_BOX_DATA_OFFSET + 4], "little"
+    )
+    ivs = decode_individual_values(packed_ivs)
     evs = EVs(
         hp=decrypted[0x10],
         attack=decrypted[0x11],
@@ -141,15 +175,35 @@ def decode_party_pokemon(
         NICKNAME_BOX_DATA_OFFSET : NICKNAME_BOX_DATA_OFFSET + NICKNAME_FIELD_SIZE
     ]
     nickname_diagnostics = _decode_nickname(nickname_raw, address)
+    level = battle_stats[0x04]
+    current_hp = int.from_bytes(battle_stats[0x06:0x08], "little")
+    max_hp = int.from_bytes(battle_stats[0x08:0x0A], "little")
+    current_stats = CurrentStats(
+        max_hp=max_hp,
+        attack=int.from_bytes(battle_stats[0x0A:0x0C], "little"),
+        defense=int.from_bytes(battle_stats[0x0C:0x0E], "little"),
+        speed=int.from_bytes(battle_stats[0x0E:0x10], "little"),
+        special_attack=int.from_bytes(battle_stats[0x10:0x12], "little"),
+        special_defense=int.from_bytes(battle_stats[0x12:0x14], "little"),
+    )
+    battle_stats_error = _validate_battle_stats(level, current_hp, max_hp, current_stats)
 
     return DecodedPokemon(
         species_id=species_id,
         held_item_id=held_item_id,
         experience=experience,
         evs=evs,
-        level=battle_stats[0x04],
-        current_hp=int.from_bytes(battle_stats[0x06:0x08], "little"),
-        max_hp=int.from_bytes(battle_stats[0x08:0x0A], "little"),
+        level=level,
+        current_hp=current_hp,
+        max_hp=max_hp,
+        nature_id=nature.id,
+        nature_name=nature.name,
+        nature_increased_stat=nature.increased_stat,
+        nature_decreased_stat=nature.decreased_stat,
+        ability_id=ability_id,
+        packed_ivs=packed_ivs,
+        ivs=ivs,
+        current_stats=current_stats,
         nickname=nickname_diagnostics.decoded_string,
         nickname_diagnostics=nickname_diagnostics,
         diagnostics=PokemonDiagnostics(
@@ -161,8 +215,33 @@ def decode_party_pokemon(
             shuffle_index=shuffle_index(pid),
             block_order=block_order(pid),
             sanity_bytes=data[:16].hex(" ").upper(),
+            battle_stats_raw_hex=battle_stats_raw.hex(" ").upper(),
+            battle_stats_decrypted_hex=battle_stats.hex(" ").upper(),
+            battle_stats_valid=battle_stats_error is None,
+            battle_stats_error=battle_stats_error,
         ),
     )
+
+
+def _validate_battle_stats(
+    level: int, current_hp: int, max_hp: int, stats: CurrentStats
+) -> str | None:
+    if not 1 <= level <= 100:
+        return f"Level {level} is outside the supported range 1-100."
+    if not 1 <= max_hp <= 714:
+        return f"Max HP {max_hp} is outside the possible range 1-714."
+    if current_hp > max_hp:
+        return f"Current HP {current_hp} exceeds max HP {max_hp}."
+    for name, value in (
+        ("Attack", stats.attack),
+        ("Defense", stats.defense),
+        ("Speed", stats.speed),
+        ("Special Attack", stats.special_attack),
+        ("Special Defense", stats.special_defense),
+    ):
+        if not 1 <= value <= 999:
+            return f"{name} {value} is outside the possible range 1-999."
+    return None
 
 
 def _decode_nickname(raw: bytes, record_address: int | None) -> NicknameDiagnostics:

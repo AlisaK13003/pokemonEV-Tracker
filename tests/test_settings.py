@@ -9,6 +9,7 @@ def test_settings_round_trip(tmp_path) -> None:
     path = tmp_path / "settings.json"
     original = AppSettings(
         compact_mode=True,
+        tracker_view="stats",
         window_geometry=(-1200, 55, 744, 620),
         normal_window_geometry=(20, 30, 1260, 850),
     )
@@ -19,6 +20,7 @@ def test_settings_round_trip(tmp_path) -> None:
     assert loaded == original
     assert set(json.loads(path.read_text(encoding="utf-8"))) == {
         "compact_mode",
+        "tracker_view",
         "window_geometry",
         "normal_window_geometry",
     }
@@ -32,6 +34,7 @@ def test_settings_ignore_unknown_preferences(tmp_path) -> None:
                 "obsolete_option": "ignored",
                 "another_unknown_option": {"value": 0.1},
                 "compact_mode": True,
+                "tracker_view": "stats",
                 "window_geometry": [10, 20, 800, 600],
             }
         ),
@@ -41,6 +44,7 @@ def test_settings_ignore_unknown_preferences(tmp_path) -> None:
     loaded = AppSettings.load(path)
 
     assert loaded.compact_mode
+    assert loaded.tracker_view == "stats"
     assert loaded.window_geometry == (10, 20, 800, 600)
     assert not hasattr(loaded, "obsolete_option")
 
@@ -61,7 +65,15 @@ def test_load_default_migrates_only_tracker_preferences(monkeypatch, tmp_path) -
     assert settings.window_geometry == (1, 2, 600, 400)
     assert set(json.loads(destination.read_text(encoding="utf-8"))) == {
         "compact_mode",
+        "tracker_view",
         "window_geometry",
         "normal_window_geometry",
     }
     assert legacy.exists()
+
+
+def test_unknown_tracker_view_defaults_to_training(tmp_path) -> None:
+    path = tmp_path / "invalid-settings.json"
+    path.write_text('{"tracker_view": "unrecognized"}', encoding="utf-8")
+
+    assert AppSettings.load(path).tracker_view == "training"

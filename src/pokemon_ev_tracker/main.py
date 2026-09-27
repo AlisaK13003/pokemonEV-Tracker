@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 
 from PySide6.QtWidgets import QApplication
@@ -12,8 +13,14 @@ from pokemon_ev_tracker.ui.main_window import MainWindow
 
 
 def configure_logging() -> None:
+    configured_level = getattr(
+        logging,
+        os.environ.get("POKEMON_EV_TRACKER_LOG_LEVEL", "INFO").upper(),
+        logging.INFO,
+    )
+    log_level = configured_level if isinstance(configured_level, int) else logging.INFO
     logging.basicConfig(
-        level=logging.INFO,
+        level=log_level,
         format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
     )
 

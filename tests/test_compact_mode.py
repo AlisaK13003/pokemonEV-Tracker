@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from types import SimpleNamespace
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -99,7 +100,10 @@ def test_compact_history_shows_four_recent_entries_and_normal_restores_full_text
 ) -> None:
     window = make_window()
     window._ev_history_records = [
-        (f"15:42:0{index}  Mareep Attack 0 -> {index}  +{index}", f"+{index} Attack")
+        (
+            f"15:42:0{index}  sheepy (Mareep) Attack 0 -> {index}  +{index}",
+            f"+{index} Attack — sheepy (Mareep)",
+        )
         for index in range(1, 7)
     ]
     window._render_ev_history()
@@ -107,12 +111,73 @@ def test_compact_history_shows_four_recent_entries_and_normal_restores_full_text
 
     window.set_compact_mode(True)
     assert window.ev_change_list.count() == 4
-    assert window.ev_change_list.item(0).text() == "+3 Attack"
-    assert window.ev_change_list.item(3).text() == "+6 Attack"
+    assert window.ev_change_list.minimumHeight() == 112
+    assert window.ev_change_list.item(0).text() == "+3 Attack — sheepy (Mareep)"
+    assert window.ev_change_list.item(3).text() == "+6 Attack — sheepy (Mareep)"
 
     window.set_compact_mode(False)
     assert window.ev_change_list.count() == 6
     assert window.ev_change_list.item(0).text().startswith("15:42:01")
+    window.close()
+
+
+def test_tracker_places_opponent_above_party_and_gives_log_room_for_multiple_rows(
+    make_window,
+) -> None:
+    window = make_window()
+
+    assert window.tracker_layout.indexOf(window.current_opponent_panel) < window.tracker_layout.indexOf(
+        window.party_grid
+    )
+    assert window.ev_change_list.minimumHeight() >= 150
+    assert window.ev_change_list.maximumHeight() >= 200
+    window.close()
+
+
+def test_ram_debug_updates_preserve_manual_scroll_position(make_window) -> None:
+    app = QApplication.instance()
+    window = make_window()
+    window.main_tabs.setCurrentIndex(1)
+    window.show()
+    lines = [f"RAM diagnostic row {index:03d}: value 0000" for index in range(120)]
+    window._set_ram_party_debug_text("\n".join(lines))
+    app.processEvents()
+
+    scroll_bar = window.ram_party_details.verticalScrollBar()
+    assert scroll_bar.maximum() > 30
+    scroll_bar.setValue(20)
+    app.processEvents()
+    lines[0] = "RAM diagnostic row 000: value 0001"
+
+    window._set_ram_party_debug_text("\n".join(lines))
+
+    assert scroll_bar.value() == 20
+    window.close()
+
+
+def test_compact_ev_change_includes_pokemon_identity(make_window) -> None:
+    window = make_window()
+    before = {"hp": 0, "attack": 0, "defense": 0, "special_attack": 0,
+              "special_defense": 0, "speed": 0}
+    after = {**before, "attack": 1}
+
+    def party(evs):
+        pokemon = SimpleNamespace(
+            slot=1,
+            species="Mareep",
+            nickname="sheepy",
+            checksum_valid=True,
+            evs=evs,
+            decoded=SimpleNamespace(diagnostics=SimpleNamespace(pid=1234)),
+        )
+        return SimpleNamespace(party_count_valid=True, pokemon=(pokemon,))
+
+    window._record_ev_changes(party(before))
+    window._record_ev_changes(party(after))
+
+    assert window._ev_history_records[-1][1] == "+1 Attack — sheepy (Mareep)"
+    window.set_compact_mode(True)
+    assert window.ev_change_list.item(0).text() == "+1 Attack — sheepy (Mareep)"
     window.close()
 
 
@@ -147,4 +212,17 @@ def test_muted_tracker_labels_keep_readable_dark_theme_contrast(make_window) -> 
     assert "#b9c2cc" in card["item_name"].styleSheet()
     assert "#b9c2cc" in card["target_summary"].styleSheet()
     assert all("#d7dce2" in label.styleSheet() for label in card["ev_stat_names"].values())
+    window.close()
+
+
+def test_party_stats_compact_mode_keeps_stats_visible_and_log_hidden(make_window) -> None:
+    window = make_window()
+    window.set_tracker_view("stats")
+    window.set_compact_mode(True)
+
+    assert window.tracker_view_buttons["stats"].isChecked()
+    assert window.tracker_party_cards[1]["stats_content"].isHidden() is False
+    assert window.tracker_party_cards[1]["training_content"].isHidden()
+    assert window.ev_change_log.isHidden()
+    assert window.compact_mode
     window.close()

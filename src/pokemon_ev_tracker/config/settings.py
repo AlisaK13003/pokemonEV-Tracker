@@ -27,11 +27,17 @@ def _normalize_window_geometry(value) -> tuple[int, int, int, int] | None:
 @dataclass
 class AppSettings:
     compact_mode: bool = False
+    tracker_view: str = "training"
     window_geometry: tuple[int, int, int, int] | None = None
     normal_window_geometry: tuple[int, int, int, int] | None = None
 
     def __post_init__(self) -> None:
         self.compact_mode = bool(self.compact_mode)
+        if not isinstance(self.tracker_view, str) or self.tracker_view not in {
+            "training",
+            "stats",
+        }:
+            self.tracker_view = "training"
         self.window_geometry = _normalize_window_geometry(self.window_geometry)
         self.normal_window_geometry = _normalize_window_geometry(self.normal_window_geometry)
 
@@ -50,6 +56,7 @@ class AppSettings:
             if isinstance(legacy, dict):
                 settings = cls(
                     compact_mode=legacy.get("compact_mode", False),
+                    tracker_view=legacy.get("tracker_view", "training"),
                     window_geometry=legacy.get("window_geometry"),
                     normal_window_geometry=legacy.get("normal_window_geometry"),
                 )
@@ -69,6 +76,7 @@ class AppSettings:
             return cls()
         return cls(
             compact_mode=data.get("compact_mode", False),
+            tracker_view=data.get("tracker_view", "training"),
             window_geometry=data.get("window_geometry"),
             normal_window_geometry=data.get("normal_window_geometry"),
         )

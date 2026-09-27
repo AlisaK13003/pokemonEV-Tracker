@@ -31,7 +31,7 @@ class EVChangeTracker:
             return ()
         changes = []
         for pokemon in party_state.pokemon:
-            if not pokemon.checksum_valid:
+            if not pokemon.checksum_valid or getattr(pokemon, "sample_stale", False):
                 continue
             pid = pokemon.decoded.diagnostics.pid
             current = dict(pokemon.evs)

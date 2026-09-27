@@ -6,10 +6,12 @@ import unicodedata
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from pokemon_ev_tracker.games.platinum.abilities import get_platinum_ability
 from pokemon_ev_tracker.games.platinum.items import get_gen4_item_name
 from pokemon_ev_tracker.games.platinum.species import Species, load_gen4_species
 from pokemon_ev_tracker.pokemon.gen4.structure import (
     PARTY_POKEMON_SIZE,
+    CurrentStats,
     DecodedPokemon,
     decode_party_pokemon,
 )
@@ -30,6 +32,22 @@ class PartyPokemon:
     ev_total: int
     checksum_valid: bool
     decoded: DecodedPokemon
+    nature_id: int
+    nature_name: str
+    nature_increased_stat: str | None
+    nature_decreased_stat: str | None
+    ability_slot: int | None
+    ability_id: int
+    ability_name: str | None
+    hp_iv: int
+    attack_iv: int
+    defense_iv: int
+    special_attack_iv: int
+    special_defense_iv: int
+    speed_iv: int
+    current_stats: CurrentStats | None
+    sample_stale: bool = False
+    battle_stats_stale: bool = False
 
 
 @dataclass(frozen=True)
@@ -39,6 +57,7 @@ class PartyState:
     pokemon: tuple[PartyPokemon, ...]
     error: str | None = None
     candidate_count: int = 0
+    live_read_warning: str | None = None
 
 
 def decode_party(
@@ -84,6 +103,7 @@ def decode_party(
             "special_defense": decoded.evs.special_defense,
             "speed": decoded.evs.speed,
         }
+        ability = get_platinum_ability(decoded.species_id, decoded.ability_id)
         decoded_slots.append(
             PartyPokemon(
                 slot=slot_index + 1,
@@ -99,6 +119,25 @@ def decode_party(
                 ev_total=decoded.evs.total,
                 checksum_valid=decoded.diagnostics.checksum_valid,
                 decoded=decoded,
+                nature_id=decoded.nature_id,
+                nature_name=decoded.nature_name,
+                nature_increased_stat=decoded.nature_increased_stat,
+                nature_decreased_stat=decoded.nature_decreased_stat,
+                ability_slot=ability.slot,
+                ability_id=ability.id,
+                ability_name=ability.name,
+                hp_iv=decoded.ivs.hp,
+                attack_iv=decoded.ivs.attack,
+                defense_iv=decoded.ivs.defense,
+                special_attack_iv=decoded.ivs.special_attack,
+                special_defense_iv=decoded.ivs.special_defense,
+                speed_iv=decoded.ivs.speed,
+                current_stats=(
+                    decoded.current_stats
+                    if decoded.diagnostics.checksum_valid
+                    and decoded.diagnostics.battle_stats_valid
+                    else None
+                ),
             )
         )
 
