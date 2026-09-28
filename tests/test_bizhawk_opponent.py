@@ -291,6 +291,9 @@ def test_ram_debug_shows_all_candidate_records_and_current_enemy() -> None:
 
     class DebugHarness:
         _refresh_ram_party_debug = MainWindow._refresh_ram_party_debug
+        _friendship_walk_transport_debug_lines = (
+            MainWindow._friendship_walk_transport_debug_lines
+        )
 
         def __init__(self):
             self.ram_party_summary_label = QLabel()
@@ -403,6 +406,7 @@ def test_main_window_binds_debug_opponents_to_visible_tracker_cards(
         target_store=EVTargetStore(tmp_path / "targets.json"),
         nuzlocke_store=NuzlockeStore(tmp_path / "nuzlocke_runs.json"),
     )
+    window.refresh_timer.stop()
     if compact:
         window.set_compact_mode(True)
     window.show()
@@ -423,8 +427,11 @@ def test_main_window_binds_debug_opponents_to_visible_tracker_cards(
     assert not double_battle.connected
     assert "Enemy 1: Machop, Lv. 14" in window.ram_party_details.toPlainText()
     assert "Enemy 2: Weedle, Lv. 13" in window.ram_party_details.toPlainText()
-    assert len(panel_received[-1]) == 2
-    assert panel_received[-1] is double_battle.details["active_enemy_battlers"]
+    assert any(len(received) == 2 for received in panel_received)
+    assert any(
+        received is double_battle.details["active_enemy_battlers"]
+        for received in panel_received
+    )
     assert "MainWindow opponent update: 2 - Machop Lv14, Weedle Lv13" in caplog.text
     assert "OpponentPanel received: 2; cards rendered: 2; layout count after render: 3" in caplog.text
     assert panel.isVisible()

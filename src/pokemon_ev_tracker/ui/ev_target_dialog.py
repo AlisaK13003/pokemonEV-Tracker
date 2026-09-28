@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from pokemon_ev_tracker.core.ev_targets import EV_STAT_KEYS, EVTarget
+from pokemon_ev_tracker.ui.theme import refresh_style
 
 EV_STAT_LABELS = {
     "hp": "HP",
@@ -78,5 +79,6 @@ class EVTargetDialog(QDialog):
         self.total_label.setText(
             f"Target total: {total} / 510" if valid else f"Target total: {total} / 510 (over limit)"
         )
-        self.total_label.setStyleSheet("color: palette(mid);" if valid else "color: #d18888;")
+        self.total_label.setProperty("statusRole", "info" if valid else "error")
+        refresh_style(self.total_label)
         self.save_button.setEnabled(valid)

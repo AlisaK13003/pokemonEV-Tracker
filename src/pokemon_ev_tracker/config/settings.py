@@ -28,6 +28,7 @@ def _normalize_window_geometry(value) -> tuple[int, int, int, int] | None:
 class AppSettings:
     compact_mode: bool = False
     tracker_view: str = "training"
+    friendship_walk_axis: str = "horizontal"
     window_geometry: tuple[int, int, int, int] | None = None
     normal_window_geometry: tuple[int, int, int, int] | None = None
 
@@ -38,6 +39,11 @@ class AppSettings:
             "stats",
         }:
             self.tracker_view = "training"
+        if not isinstance(self.friendship_walk_axis, str) or self.friendship_walk_axis not in {
+            "horizontal",
+            "vertical",
+        }:
+            self.friendship_walk_axis = "horizontal"
         self.window_geometry = _normalize_window_geometry(self.window_geometry)
         self.normal_window_geometry = _normalize_window_geometry(self.normal_window_geometry)
 
@@ -57,6 +63,7 @@ class AppSettings:
                 settings = cls(
                     compact_mode=legacy.get("compact_mode", False),
                     tracker_view=legacy.get("tracker_view", "training"),
+                    friendship_walk_axis=legacy.get("friendship_walk_axis", "horizontal"),
                     window_geometry=legacy.get("window_geometry"),
                     normal_window_geometry=legacy.get("normal_window_geometry"),
                 )
@@ -77,6 +84,7 @@ class AppSettings:
         return cls(
             compact_mode=data.get("compact_mode", False),
             tracker_view=data.get("tracker_view", "training"),
+            friendship_walk_axis=data.get("friendship_walk_axis", "horizontal"),
             window_geometry=data.get("window_geometry"),
             normal_window_geometry=data.get("normal_window_geometry"),
         )

@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QGroupBox,
     QHBoxLayout,
+    QHeaderView,
     QInputDialog,
     QLabel,
     QMessageBox,
@@ -49,6 +50,7 @@ from pokemon_ev_tracker.ui.nuzlocke_dialogs import (
     LevelCapsDialog,
     NewRunDialog,
 )
+from pokemon_ev_tracker.ui.theme import COLORS
 
 _STATUS_LABELS = {
     "NOT_ENCOUNTERED": "Not encountered",
@@ -59,11 +61,11 @@ _STATUS_LABELS = {
     "DUPES": "Dupes clause",
 }
 _STATUS_COLORS = {
-    "CAUGHT": "#547b62",
-    "FAILED": "#865b53",
-    "DEAD": "#8b4545",
-    "SKIPPED": "#646b73",
-    "DUPES": "#6b6080",
+    "CAUGHT": COLORS["status_caught"],
+    "FAILED": COLORS["status_failed"],
+    "DEAD": COLORS["status_dead"],
+    "SKIPPED": COLORS["status_skipped"],
+    "DUPES": COLORS["status_dupes"],
 }
 
 
@@ -75,6 +77,7 @@ class NuzlockeView(QWidget):
         parent=None,
     ) -> None:
         super().__init__(parent)
+        self.setObjectName("nuzlockeView")
         self.store = store or NuzlockeStore()
         self.profiles = {profile.game_id: profile for profile in profiles}
         self.party_levels: tuple[PartyLevel, ...] = ()
@@ -89,13 +92,15 @@ class NuzlockeView(QWidget):
         root.setSpacing(7)
         toolbar = QHBoxLayout()
         self.run_selector = QComboBox()
-        self.run_selector.setMinimumWidth(210)
+        self.run_selector.setMinimumWidth(120)
         self.run_selector.currentIndexChanged.connect(self._switch_run)
         toolbar.addWidget(QLabel("Run"))
         toolbar.addWidget(self.run_selector, 1)
         self.create_button = QPushButton("Create Run")
+        self.create_button.setProperty("buttonRole", "primary")
         self.rename_button = QPushButton("Rename")
         self.delete_button = QPushButton("Delete")
+        self.delete_button.setProperty("buttonRole", "danger")
         for button in (self.create_button, self.rename_button, self.delete_button):
             toolbar.addWidget(button)
         self.create_button.clicked.connect(self._create_run)
@@ -104,8 +109,8 @@ class NuzlockeView(QWidget):
         root.addLayout(toolbar)
 
         self.empty_label = QLabel("Create a run to start tracking encounters and level caps.")
+        self.empty_label.setObjectName("nuzlockeEmpty")
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.empty_label.setStyleSheet("color: #b9c2cc; padding: 28px;")
         root.addWidget(self.empty_label)
 
         self.run_content = QWidget()
@@ -114,20 +119,26 @@ class NuzlockeView(QWidget):
         content.setContentsMargins(0, 0, 0, 0)
         content.setSpacing(7)
         self.cap_group = QGroupBox("Next Level Cap")
+        self.cap_group.setObjectName("nextLevelCap")
         cap_layout = QVBoxLayout(self.cap_group)
         cap_heading = QHBoxLayout()
         self.next_cap_label = QLabel("No remaining fights")
-        self.next_cap_label.setStyleSheet("font-size: 18px; font-weight: 600;")
+        self.next_cap_label.setProperty("nuzlockeRole", "capTitle")
+        self.next_cap_label.setWordWrap(True)
         cap_heading.addWidget(self.next_cap_label, 1)
         self.cap_progress_label = QLabel("0 / 0 major fights completed")
+        self.cap_progress_label.setProperty("uiRole", "muted")
         cap_heading.addWidget(self.cap_progress_label)
-        self.edit_caps_button = QPushButton("Edit Level Caps")
-        cap_heading.addWidget(self.edit_caps_button)
-        self.complete_cap_button = QPushButton("Mark Fight Completed")
-        cap_heading.addWidget(self.complete_cap_button)
         cap_layout.addLayout(cap_heading)
+        cap_actions = QHBoxLayout()
+        cap_actions.addStretch(1)
+        self.edit_caps_button = QPushButton("Edit Level Caps")
+        cap_actions.addWidget(self.edit_caps_button)
+        self.complete_cap_button = QPushButton("Mark Fight Completed")
+        cap_actions.addWidget(self.complete_cap_button)
+        cap_layout.addLayout(cap_actions)
         self.healing_item_hint_label = QLabel()
-        self.healing_item_hint_label.setStyleSheet("color: #aeb8c2; font-size: 11px;")
+        self.healing_item_hint_label.setProperty("nuzlockeRole", "muted")
         self.healing_item_hint_label.setToolTip(
             "The opposing trainer's configured healing-item inventory. The battle AI may not "
             "use every item. Held items and out-of-battle healing are not included."
@@ -135,29 +146,33 @@ class NuzlockeView(QWidget):
         cap_layout.addWidget(self.healing_item_hint_label)
         self.party_warning_label = QLabel()
         self.party_warning_label.setWordWrap(True)
-        self.party_warning_label.setStyleSheet("color: #e4b562;")
+        self.party_warning_label.setProperty("nuzlockeRole", "warning")
         cap_layout.addWidget(self.party_warning_label)
         content.addWidget(self.cap_group)
         self.edit_caps_button.clicked.connect(self._edit_caps)
         self.complete_cap_button.clicked.connect(self._complete_next_cap)
 
         self.ram_death_group = QGroupBox("Fainted Pokémon")
-        ram_death_layout = QHBoxLayout(self.ram_death_group)
+        self.ram_death_group.setObjectName("ramDeathPanel")
+        ram_death_layout = QVBoxLayout(self.ram_death_group)
         self.ram_death_detail_label = QLabel()
         self.ram_death_detail_label.setWordWrap(True)
-        ram_death_layout.addWidget(self.ram_death_detail_label, 2)
+        ram_death_layout.addWidget(self.ram_death_detail_label)
+        ram_death_actions = QHBoxLayout()
         self.ram_death_location_selector = QComboBox()
-        self.ram_death_location_selector.setMinimumWidth(170)
+        self.ram_death_location_selector.setMinimumWidth(100)
         self.ram_death_location_selector.currentIndexChanged.connect(
             self._update_ram_death_action_state
         )
-        ram_death_layout.addWidget(self.ram_death_location_selector, 1)
+        ram_death_actions.addWidget(self.ram_death_location_selector, 1)
         self.confirm_ram_death_button = QPushButton("Mark Dead")
+        self.confirm_ram_death_button.setProperty("buttonRole", "danger")
         self.ignore_ram_death_button = QPushButton("Ignore")
         self.dismiss_ram_death_notice_button = QPushButton("Dismiss")
-        ram_death_layout.addWidget(self.confirm_ram_death_button)
-        ram_death_layout.addWidget(self.ignore_ram_death_button)
-        ram_death_layout.addWidget(self.dismiss_ram_death_notice_button)
+        ram_death_actions.addWidget(self.confirm_ram_death_button)
+        ram_death_actions.addWidget(self.ignore_ram_death_button)
+        ram_death_actions.addWidget(self.dismiss_ram_death_notice_button)
+        ram_death_layout.addLayout(ram_death_actions)
         self.confirm_ram_death_button.clicked.connect(self._confirm_ram_death)
         self.ignore_ram_death_button.clicked.connect(self._ignore_ram_death)
         self.dismiss_ram_death_notice_button.clicked.connect(self._dismiss_ram_death_notice)
@@ -165,12 +180,13 @@ class NuzlockeView(QWidget):
         content.addWidget(self.ram_death_group)
 
         self.acquisition_group = QGroupBox("New Party Pokémon")
+        self.acquisition_group.setObjectName("acquisitionPanel")
         acquisition_layout = QVBoxLayout(self.acquisition_group)
         self.party_detection_scope_label = QLabel(
             "Automatic capture detection currently requires the Pokémon to appear in the party."
         )
         self.party_detection_scope_label.setWordWrap(True)
-        self.party_detection_scope_label.setStyleSheet("color: #aeb8c2;")
+        self.party_detection_scope_label.setProperty("uiRole", "muted")
         acquisition_layout.addWidget(self.party_detection_scope_label)
         self.auto_record_acquisitions = QCheckBox("Automatically record unambiguous encounters")
         self.auto_record_acquisitions.setToolTip(
@@ -184,20 +200,25 @@ class NuzlockeView(QWidget):
         )
         self.auto_confirm_deaths.toggled.connect(self._set_auto_confirm_deaths)
         acquisition_layout.addWidget(self.auto_confirm_deaths)
-        suggestion_row = QHBoxLayout()
-        self.acquisition_selector = QComboBox()
-        self.acquisition_selector.setMinimumWidth(220)
-        self.acquisition_selector.currentIndexChanged.connect(self._select_acquisition)
         self.acquisition_detail_label = QLabel("No new party Pokémon detected.")
         self.acquisition_detail_label.setWordWrap(True)
-        suggestion_row.addWidget(self.acquisition_detail_label, 2)
-        suggestion_row.addWidget(self.acquisition_selector, 1)
+        suggestion_detail = QHBoxLayout()
+        suggestion_detail.addWidget(self.acquisition_detail_label, 1)
+        acquisition_layout.addLayout(suggestion_detail)
+        selection_row = QHBoxLayout()
+        self.acquisition_selector = QComboBox()
+        self.acquisition_selector.setMinimumWidth(120)
+        self.acquisition_selector.currentIndexChanged.connect(self._select_acquisition)
+        selection_row.addWidget(self.acquisition_selector, 2)
         self.acquisition_location_selector = QComboBox()
-        self.acquisition_location_selector.setMinimumWidth(170)
+        self.acquisition_location_selector.setMinimumWidth(110)
         self.acquisition_location_selector.currentIndexChanged.connect(
             self._render_selected_acquisition
         )
-        suggestion_row.addWidget(self.acquisition_location_selector, 1)
+        selection_row.addWidget(self.acquisition_location_selector, 1)
+        acquisition_layout.addLayout(selection_row)
+        suggestion_actions = QHBoxLayout()
+        suggestion_actions.addStretch(1)
         self.accept_acquisition_button = QPushButton("Add")
         self.replace_acquisition_button = QPushButton("Replace Existing")
         self.extra_acquisition_button = QPushButton("Add as Extra")
@@ -208,8 +229,8 @@ class NuzlockeView(QWidget):
             self.extra_acquisition_button,
             self.ignore_acquisition_button,
         ):
-            suggestion_row.addWidget(button)
-        acquisition_layout.addLayout(suggestion_row)
+            suggestion_actions.addWidget(button)
+        acquisition_layout.addLayout(suggestion_actions)
         content.addWidget(self.acquisition_group)
         self.accept_acquisition_button.clicked.connect(self._accept_selected_acquisition)
         self.replace_acquisition_button.clicked.connect(self._replace_selected_acquisition)
@@ -217,7 +238,8 @@ class NuzlockeView(QWidget):
         self.ignore_acquisition_button.clicked.connect(self._ignore_selected_acquisition)
 
         self.summary_label = QLabel()
-        self.summary_label.setStyleSheet("color: #c5cbd2;")
+        self.summary_label.setProperty("nuzlockeRole", "summary")
+        self.summary_label.setWordWrap(True)
         content.addWidget(self.summary_label)
 
         run_details = QGroupBox("Run Notes")
@@ -238,6 +260,7 @@ class NuzlockeView(QWidget):
         self.run_completed_input.toggled.connect(self._save_run_details)
 
         self.sections = QTabWidget()
+        self.sections.setObjectName("nuzlockeSections")
         content.addWidget(self.sections, 1)
         self._build_encounters_tab()
         self._build_caps_tab()
@@ -297,6 +320,7 @@ class NuzlockeView(QWidget):
         controls.addStretch(1)
         self.edit_encounter_button = QPushButton("Edit Encounter")
         self.reset_encounter_button = QPushButton("Reset Encounter")
+        self.reset_encounter_button.setProperty("buttonRole", "danger")
         controls.addWidget(self.edit_encounter_button)
         controls.addWidget(self.reset_encounter_button)
         layout.addLayout(controls)
@@ -309,6 +333,7 @@ class NuzlockeView(QWidget):
         self.encounters_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.encounters_table.verticalHeader().hide()
         self.encounters_table.setAlternatingRowColors(True)
+        self._configure_table(self.encounters_table)
         self.encounters_table.setColumnWidth(0, 190)
         self.encounters_table.setColumnWidth(1, 135)
         self.encounters_table.setColumnWidth(2, 145)
@@ -330,6 +355,7 @@ class NuzlockeView(QWidget):
         self.caps_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.caps_table.verticalHeader().hide()
         self.caps_table.setAlternatingRowColors(True)
+        self._configure_table(self.caps_table)
         self.caps_table.setColumnWidth(0, 260)
         self.caps_table.setColumnWidth(1, 160)
         self.caps_table.setColumnWidth(2, 90)
@@ -344,6 +370,7 @@ class NuzlockeView(QWidget):
         controls.addStretch(1)
         self.add_death_button = QPushButton("Record Death")
         self.remove_death_button = QPushButton("Remove Death")
+        self.remove_death_button.setProperty("buttonRole", "danger")
         controls.addWidget(self.add_death_button)
         controls.addWidget(self.remove_death_button)
         layout.addLayout(controls)
@@ -359,6 +386,7 @@ class NuzlockeView(QWidget):
         self.deaths_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.deaths_table.verticalHeader().hide()
         self.deaths_table.setAlternatingRowColors(True)
+        self._configure_table(self.deaths_table)
         self.deaths_table.setColumnWidth(0, 150)
         self.deaths_table.setColumnWidth(1, 120)
         self.deaths_table.setColumnWidth(2, 55)
@@ -371,6 +399,14 @@ class NuzlockeView(QWidget):
         self.add_death_button.clicked.connect(self._add_death)
         self.remove_death_button.clicked.connect(self._remove_death)
         self.sections.addTab(page, "Death Log")
+
+    @staticmethod
+    def _configure_table(table: QTableWidget) -> None:
+        table.setMinimumWidth(0)
+        table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        table.horizontalHeader().setMinimumSectionSize(52)
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
     def _active_profile(self) -> NuzlockeGameProfile | None:
         run = self.store.active_run
@@ -895,11 +931,9 @@ class NuzlockeView(QWidget):
             for status in ENCOUNTER_STATUSES:
                 status_box.addItem(_STATUS_LABELS[status], status)
             status_box.setCurrentIndex(status_box.findData(encounter.status))
-            status_color = _STATUS_COLORS.get(encounter.status)
-            if status_color:
-                status_box.setStyleSheet(
-                    f"QComboBox {{ background-color: {status_color}; color: #ffffff; }}"
-                )
+            status_box.setProperty("encounterStatus", encounter.status)
+            status_box.style().unpolish(status_box)
+            status_box.style().polish(status_box)
             status_box.currentIndexChanged.connect(
                 lambda _i, location_id=encounter.location_id, box=status_box: (
                     self._set_encounter_status(location_id, box.currentData())

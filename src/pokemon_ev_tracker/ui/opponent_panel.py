@@ -7,6 +7,7 @@ import logging
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QMovie
 from PySide6.QtWidgets import (
+    QBoxLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -28,6 +29,7 @@ LOGGER = logging.getLogger(__name__)
 class _OpponentCard(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self.setProperty("uiRole", "opponentCard")
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._species_id: int | None = None
         self._asset = None
@@ -39,16 +41,16 @@ class _OpponentCard(QWidget):
         self.sprite = QLabel()
         self.sprite.setFixedSize(64, 64)
         self.sprite.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.sprite.setStyleSheet("background: palette(alternate-base); border-radius: 3px;")
+        self.sprite.setProperty("uiRole", "sprite")
         layout.addWidget(self.sprite)
 
         details = QVBoxLayout()
         details.setContentsMargins(0, 0, 0, 0)
         details.setSpacing(2)
         self.name = QLabel("Not currently battling")
-        self.name.setStyleSheet("font-weight: 600; color: #f0f2f5;")
+        self.name.setProperty("uiRole", "pokemonName")
         self.ev_yield = QLabel()
-        self.ev_yield.setStyleSheet("color: #b9c2cc;")
+        self.ev_yield.setProperty("uiRole", "muted")
         self.ev_yield.setToolTip(
             "Base species EV yield. Held items and Pokérus can change the EVs awarded."
         )
@@ -106,18 +108,21 @@ class _OpponentCard(QWidget):
 class CurrentOpponentPanel(QGroupBox):
     def __init__(self, parent=None) -> None:
         super().__init__("Currently Battling", parent)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setObjectName("currentlyBattling")
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(8, 5, 8, 6)
-        layout.setSpacing(8)
+        layout.setContentsMargins(8, 2, 8, 5)
+        layout.setSpacing(6)
 
         self.empty_label = QLabel("Not currently battling")
-        self.empty_label.setStyleSheet("font-weight: 600; color: #f0f2f5;")
+        self.empty_label.setProperty("uiRole", "emptyState")
         layout.addWidget(self.empty_label)
         self.cards = [_OpponentCard(self), _OpponentCard(self)]
         for card in self.cards:
             card.hide()
             layout.addWidget(card, 1)
+        self._set_layout_direction()
+        self.setMaximumHeight(58)
 
         # Keep the first-opponent labels available for callers and diagnostics.
         self.sprite = self.cards[0].sprite
@@ -129,6 +134,7 @@ class CurrentOpponentPanel(QGroupBox):
 
     def set_opponents(self, pokemon_list) -> None:
         opponents = tuple(pokemon_list or ())[:2]
+        self._set_layout_direction()
         self.empty_label.setVisible(not opponents)
         for index, card in enumerate(self.cards):
             if index < len(opponents):
@@ -137,6 +143,7 @@ class CurrentOpponentPanel(QGroupBox):
             else:
                 card.clear()
                 card.hide()
+        self._update_panel_height()
         visible_cards = sum(not card.isHidden() for card in self.cards)
         content_visible = self.isVisible() and (
             all(card.isVisible() for card in self.cards[: len(opponents)])
@@ -153,4 +160,26 @@ class CurrentOpponentPanel(QGroupBox):
             self.height(),
             content_visible,
             sum(card.isVisible() for card in self.cards),
+        )
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._set_layout_direction()
+        self._update_panel_height()
+
+    def _update_panel_height(self) -> None:
+        visible_cards = sum(not card.isHidden() for card in self.cards)
+        if visible_cards == 0:
+            self.setMaximumHeight(58)
+        elif visible_cards == 2 and self.width() < 650:
+            self.setMaximumHeight(220)
+        else:
+            self.setMaximumHeight(125)
+
+    def _set_layout_direction(self) -> None:
+        layout = self.layout()
+        layout.setDirection(
+            QBoxLayout.Direction.TopToBottom
+            if self.width() < 650
+            else QBoxLayout.Direction.LeftToRight
         )

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 from pokemon_ev_tracker.data_sources.base import DataSourceSnapshot, GameDataSource
 from pokemon_ev_tracker.games.platinum.battle import (
@@ -13,10 +13,21 @@ from pokemon_ev_tracker.games.platinum.battle import (
     decode_battle_battlers,
 )
 from pokemon_ev_tracker.games.platinum.decoder import PartyState, valid_checksum_count
+from pokemon_ev_tracker.games.platinum.player_position import decode_player_position
 from pokemon_ev_tracker.games.platinum.profile import PLATINUM_PROFILE
-from pokemon_ev_tracker.transport.bizhawk_server import BizHawkDebugServer
+from pokemon_ev_tracker.transport.bizhawk_server import (
+    BizHawkDebugServer,
+    FriendshipWalkCommandReceipt,
+)
 
 LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class CoordinateCaptureRequest:
+    accepted: bool
+    source: str | None = None
+    reason: str | None = None
 
 
 class BizHawkRamDataSource(GameDataSource):
@@ -40,21 +51,86 @@ class BizHawkRamDataSource(GameDataSource):
     def stop(self) -> None:
         self.server.stop()
 
+    def request_coordinate_capture(
+        self, capture_id: str, label: str, start_offset: int, length: int
+    ) -> CoordinateCaptureRequest:
+        party_payload = self.server.latest_party_payload()
+        heartbeat = self.server.latest_heartbeat()
+        if (
+            not self.server.is_connected()
+            or not self._party_payload_is_fresh(party_payload)
+            or heartbeat is None
+        ):
+            return CoordinateCaptureRequest(
+                False,
+                reason="No fresh BizHawk RAM snapshot available.",
+            )
+        source = party_payload.source
+        accepted = self.server.request_coordinate_capture(
+            capture_id,
+            label,
+            start_offset,
+            length,
+            transport=source,
+        )
+        if not accepted:
+            return CoordinateCaptureRequest(
+                False,
+                source=source,
+                reason=f"Could not send a coordinate capture request through {source} transport.",
+            )
+        return CoordinateCaptureRequest(True, source=source)
+
+    def set_coordinate_preview(
+        self, x_offset: int | None, y_offset: int | None, data_type: str = "u16"
+    ) -> bool:
+        party_payload = self.server.latest_party_payload()
+        if not self.server.is_connected() or not self._party_payload_is_fresh(party_payload):
+            return False
+        return self.server.set_coordinate_preview(
+            x_offset,
+            y_offset,
+            data_type,
+            transport=party_payload.source,
+        )
+
+    def drain_coordinate_events(self):
+        return self.server.drain_coordinate_events()
+
+    def send_friendship_walk_command(
+        self, action: str, value: str | None = None
+    ) -> FriendshipWalkCommandReceipt | None:
+        if action != "STOP":
+            party_payload = self.server.latest_party_payload()
+            if not self._party_payload_is_fresh(party_payload):
+                return None
+            return self.server.send_friendship_walk_command(
+                action, value, transport=party_payload.source
+            )
+
+        party_payload = self.server.latest_party_payload()
+        source = getattr(party_payload, "source", None)
+        transports = (
+            (source, "file" if source == "tcp" else "tcp")
+            if source in {"tcp", "file"}
+            else ("file", "tcp")
+        )
+        return self.server.send_friendship_walk_command("STOP", transport=transports)
+
     def snapshot(self) -> DataSourceSnapshot:
         heartbeat = self.server.latest_heartbeat()
         party_payload = self.server.latest_party_payload()
         party_state = self._decode_party_payload(party_payload)
         display_party_state = self._stabilize_display_party(party_state, party_payload)
         battle_battlers = self._decode_battle_battlers(party_payload)
+        payload = party_payload.payload if party_payload is not None else {}
+        player_position = decode_player_position(payload)
         party_payload_fresh = self._party_payload_is_fresh(party_payload)
-        active_enemies = (
-            active_enemy_battlers(battle_battlers)
-            if party_payload_fresh
-            else ()
+        active_enemies = active_enemy_battlers(battle_battlers) if party_payload_fresh else ()
+        enemy_summary = (
+            ", ".join(f"{battler.species} Lv{battler.level}" for battler in active_enemies)
+            or "(none)"
         )
-        enemy_summary = ", ".join(
-            f"{battler.species} Lv{battler.level}" for battler in active_enemies
-        ) or "(none)"
         active_record_indices = [
             battler.battler_index for battler in battle_battlers if battler.active
         ]
@@ -75,10 +151,35 @@ class BizHawkRamDataSource(GameDataSource):
                 "fallback_file": str(self.server.fallback_file),
                 "heartbeat": heartbeat,
                 "party_payload": party_payload,
+                "party_payload_fresh": party_payload_fresh,
                 "party_state": party_state,
                 "display_party_state": display_party_state,
                 "battle_battlers": battle_battlers,
                 "active_enemy_battlers": active_enemies,
+                "player_position": player_position,
+                "friendship_walk_enabled": payload.get("friendship_walk_enabled"),
+                "friendship_walk_mode": payload.get("friendship_walk_mode"),
+                "friendship_walk_direction": payload.get("friendship_walk_direction"),
+                "friendship_walk_requested_direction": payload.get(
+                    "friendship_walk_requested_direction"
+                ),
+                "friendship_walk_injected_direction": payload.get(
+                    "friendship_walk_injected_direction"
+                ),
+                "friendship_walk_b_injected": payload.get("friendship_walk_b_injected"),
+                "friendship_walk_reversal_until_frame": payload.get(
+                    "friendship_walk_reversal_until_frame"
+                ),
+                "friendship_walk_pause_reason": payload.get("friendship_walk_pause_reason"),
+                "friendship_walk_ack_sequence": payload.get("friendship_walk_ack_sequence"),
+                "friendship_walk_ack_frame": payload.get("friendship_walk_ack_frame"),
+                "friendship_walk_ack_action": payload.get("friendship_walk_ack_action"),
+                "ram_source": getattr(party_payload, "source", None),
+                "ram_age_seconds": (
+                    max(0.0, time.monotonic() - party_payload.received_at)
+                    if party_payload is not None
+                    else None
+                ),
             },
         )
 
@@ -96,10 +197,7 @@ class BizHawkRamDataSource(GameDataSource):
             return self._battle_battlers_cache
         self._battle_payload_cache = party_payload
         payload = party_payload.payload if party_payload is not None else {}
-        raw_records = {
-            index: payload.get(f"battle_battler_{index}_raw_hex")
-            for index in range(4)
-        }
+        raw_records = {index: payload.get(f"battle_battler_{index}_raw_hex") for index in range(4)}
         self._battle_battlers_cache = decode_battle_battlers(
             raw_records,
             payload.get("pointer_value"),
@@ -107,7 +205,9 @@ class BizHawkRamDataSource(GameDataSource):
         )
         return self._battle_battlers_cache
 
-    def _stabilize_display_party(self, party_state: PartyState | None, party_payload) -> PartyState | None:
+    def _stabilize_display_party(
+        self, party_state: PartyState | None, party_payload
+    ) -> PartyState | None:
         if party_state is None:
             return None
 
@@ -145,9 +245,7 @@ class BizHawkRamDataSource(GameDataSource):
             if not pokemon.checksum_valid:
                 invalid_slots.append(pokemon.slot)
                 if previous is not None:
-                    display_members.append(
-                        replace(previous, slot=pokemon.slot, sample_stale=True)
-                    )
+                    display_members.append(replace(previous, slot=pokemon.slot, sample_stale=True))
                     stale_slots.append(pokemon.slot)
                 continue
 

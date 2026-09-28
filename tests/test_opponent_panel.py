@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QBoxLayout
 
 from pokemon_ev_tracker.ui.opponent_panel import CurrentOpponentPanel
 from pokemon_ev_tracker.ui.sprite_loader import SpriteAsset
@@ -62,6 +62,34 @@ def test_opponent_panel_shows_both_active_slots_in_a_double_battle(monkeypatch) 
     assert panel.empty_label.text() == "Not currently battling"
     panel.close()
     assert app is not None
+
+
+def test_double_battle_entries_stack_only_at_narrow_width(monkeypatch) -> None:
+    app = QApplication.instance() or QApplication([])
+    monkeypatch.setattr(
+        "pokemon_ev_tracker.ui.opponent_panel.resolve_sprite_asset",
+        lambda _species_id: SpriteAsset("missing", None),
+    )
+    panel = CurrentOpponentPanel()
+    panel.set_opponents(
+        (
+            SimpleNamespace(species_id=66, species="Machop", level=14),
+            SimpleNamespace(species_id=41, species="Zubat", level=13),
+        )
+    )
+    panel.show()
+    app.processEvents()
+
+    panel.resize(560, 400)
+    app.processEvents()
+    assert panel.layout().direction() == QBoxLayout.Direction.TopToBottom
+    assert panel.maximumHeight() >= 200
+
+    panel.resize(900, 400)
+    app.processEvents()
+    assert panel.layout().direction() == QBoxLayout.Direction.LeftToRight
+    assert panel.maximumHeight() < 200
+    panel.close()
 
 
 def test_delibird_replacement_updates_sprite_identity_level_and_yield(monkeypatch) -> None:

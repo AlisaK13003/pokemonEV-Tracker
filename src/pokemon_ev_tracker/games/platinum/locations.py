@@ -179,7 +179,9 @@ def platinum_nuzlocke_location_id(location_id: int, profile: NuzlockeGameProfile
     )
 
 
-def classify_platinum_acquisition(candidate, run=None) -> tuple[str, str, str | None]:
+def classify_platinum_acquisition(
+    candidate, run=None, *, first_party_member: bool = False
+) -> tuple[str, str, str | None]:
     """Return source, confidence, and suggested run-location ID."""
     if candidate.is_egg or candidate.egg_location_id:
         return "EGG", "HIGH", None
@@ -195,6 +197,8 @@ def classify_platinum_acquisition(candidate, run=None) -> tuple[str, str, str | 
     starter_unassigned = run is not None and (
         starter is None or _encounter_is_unused(starter)
     )
+    if first_party_member and starter_unassigned:
+        return "STARTER", "HIGH", _STARTER_ROW_ID
     if candidate.met_location_id == 0x10 and starter_unassigned:
         if (
             starter is not None

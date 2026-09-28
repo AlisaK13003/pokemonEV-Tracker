@@ -5,6 +5,8 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QGridLayout, QLabel, QVBoxLayout, QWidget
 
+from pokemon_ev_tracker.ui.theme import refresh_style
+
 
 class BackendStatusWidget(QWidget):
     def __init__(self, parent=None) -> None:
@@ -13,7 +15,7 @@ class BackendStatusWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
         self.compact_label = QLabel("BizHawk RAM • DISCONNECTED")
-        self.compact_label.setStyleSheet("font-size: 10px; color: #d18888; font-weight: 600;")
+        self.compact_label.setProperty("connectionState", "disconnected")
         layout.addWidget(self.compact_label)
         self.details = {}
         self.details_widget = QWidget()
@@ -29,6 +31,8 @@ class BackendStatusWidget(QWidget):
             )
         ):
             value = QLabel(initial)
+            if key == "connection":
+                value.setProperty("connectionState", "disconnected")
             value.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.details[key] = value
             if key in {"domain", "last_update", "frame"}:
@@ -39,12 +43,14 @@ class BackendStatusWidget(QWidget):
 
     def set_connection(self, backend: str, connected: bool, heartbeat, age: float | None) -> None:
         status = "CONNECTED" if connected else "DISCONNECTED"
-        color = "#69d29b" if connected else "#e17b7b"
+        state = "connected" if connected else "disconnected"
         self.compact_label.setText(f"{backend} • {status}")
-        self.compact_label.setStyleSheet(f"font-size: 10px; color: {color}; font-weight: 600;")
+        self.compact_label.setProperty("connectionState", state)
+        refresh_style(self.compact_label)
         self.details["backend"].setText(backend)
         self.details["connection"].setText(status)
-        self.details["connection"].setStyleSheet(f"color: {color}; font-weight: 600;")
+        self.details["connection"].setProperty("connectionState", state)
+        refresh_style(self.details["connection"])
         payload = heartbeat.payload if heartbeat is not None else {}
         self.details["domain"].setText(str(payload.get("active_domain") or "--"))
         self.details["frame"].setText(str(payload.get("frame", "--")))

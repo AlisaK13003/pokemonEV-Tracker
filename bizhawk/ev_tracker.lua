@@ -8,9 +8,15 @@ local PARTY_INTERVAL = 30
 local DOMAIN_REFRESH_INTERVAL = 600
 local CONNECT_RETRY_INTERVAL = 300
 local CONNECT_TIMEOUT_SECONDS = 0.03
+local COMMAND_FILE_POLL_INTERVAL = 15
+local WALK_REVERSAL_GRACE_FRAMES = 8
 local MAX_FALLBACK_BYTES = 512 * 1024
+local COORDINATE_SCAN_CHUNK_BYTES = 16384
+local MAX_COORDINATE_SCAN_BYTES = 0x400000
 local TEMP_ROOT = os.getenv("TEMP") or os.getenv("TMP") or os.getenv("TMPDIR")
 local FALLBACK_FILE = TEMP_ROOT and (TEMP_ROOT .. "\\ev_tracker_bizhawk.jsonl") or nil
+local COMMAND_FILE = TEMP_ROOT and (TEMP_ROOT .. "\\ev_tracker_bizhawk_command.txt") or nil
+local COORDINATE_SCAN_FILE = TEMP_ROOT and (TEMP_ROOT .. "\\ev_tracker_bizhawk_coordinates.jsonl") or nil
 local MAIN_RAM_BASE = 0x02000000
 local PLATINUM_PARTY_POINTER_ADDRESS = 0x02101D2C
 local PLATINUM_PARTY_COUNT_OFFSET = 0xD090
@@ -19,6 +25,10 @@ local PARTY_POKEMON_SIZE = 236
 local PARTY_BYTES = 4 + (6 * PARTY_POKEMON_SIZE)
 local BATTLE_BATTLER_SIZE = 0xC0
 local BATTLE_BATTLER_OFFSETS = {0x54598, 0x54658, 0x54718, 0x547D8}
+local PLAYER_X_OFFSET = 0x001C5AFE
+local PLAYER_Y_OFFSET = 0x001C5B02
+-- This wall-time lease only detects a lost Python controller; movement timing is frame-based.
+local WALK_COMMAND_LEASE_SECONDS = 4.0
 
 local socket = nil
 pcall(function()
@@ -33,6 +43,32 @@ local queued_tcp_line = nil
 local last_domain_error = nil
 local warned_null_core = false
 local run_id = tostring(os.time()) .. "-" .. tostring(math.random(100000, 999999))
+local command_buffer = ""
+local last_command_file_poll_frame = -COMMAND_FILE_POLL_INTERVAL
+local coordinate_scan = nil
+local coordinate_preview = nil
+local previous_preview_x = nil
+local previous_preview_y = nil
+local previous_player_x = nil
+local previous_player_y = nil
+local friendship_walk = {
+    enabled = false,
+    direction = nil,
+    mode = nil,
+    status = "Idle",
+    pause_reason = nil,
+    last_command_time = 0,
+    injected_direction = nil,
+    b_injected = false,
+    pending_direction = nil,
+    reversal_until_frame = nil,
+    ack_sequence = nil,
+    ack_frame = nil,
+    ack_action = nil,
+    release_pending = false,
+}
+local send_line
+local write_fallback
 local byte_hex = {}
 for value = 0, 255 do
     byte_hex[value] = string.format("%02X", value)
@@ -228,6 +264,22 @@ local function read_u32_le(domain, offset)
     return nil
 end
 
+local function read_u16_le(domain, offset)
+    if domain == nil or offset == nil then
+        return nil
+    end
+    local ok, value = pcall(function()
+        if memory.read_u16_le ~= nil then
+            return memory.read_u16_le(offset, domain)
+        end
+        memory.usememorydomain(domain)
+        local b0 = memory.readbyte(offset)
+        local b1 = memory.readbyte(offset + 1)
+        return b0 + (b1 * 0x100)
+    end)
+    return ok and value or nil
+end
+
 local function read_bytes(domain, offset, length)
     if domain == nil or offset == nil then
         return nil
@@ -275,6 +327,128 @@ local function read_bytes_hex(domain, offset, length)
         parts[index] = byte_hex[value]
     end
     return table.concat(parts)
+end
+
+local function bytes_to_hex(bytes, length)
+    if bytes == nil then
+        return nil
+    end
+    local parts = {}
+    for index = 1, length do
+        local value = type(bytes) == "string" and string.byte(bytes, index) or bytes[index]
+        if value == nil then
+            return nil
+        end
+        parts[index] = byte_hex[value]
+    end
+    return table.concat(parts)
+end
+
+local function read_coordinate(domain, offset, data_type)
+    local value = read_u16_le(domain, offset)
+    if value ~= nil and data_type == "s16" and value >= 0x8000 then
+        value = value - 0x10000
+    end
+    return value
+end
+
+local function player_coordinates(domain)
+    return read_coordinate(domain, PLAYER_X_OFFSET, "s16"),
+        read_coordinate(domain, PLAYER_Y_OFFSET, "s16")
+end
+
+local function battler_record_active(domain, pointer_value, battler_index)
+    if domain == nil or pointer_value == nil then
+        return false
+    end
+    local relative_offset = BATTLE_BATTLER_OFFSETS[battler_index + 1]
+    if relative_offset == nil then
+        return false
+    end
+    local record_offset = address_to_domain_offset(pointer_value + relative_offset)
+    local species = read_u16_le(domain, record_offset)
+    local level = try_call(function()
+        memory.usememorydomain(domain)
+        return memory.readbyte(record_offset + 0x34)
+    end, nil)
+    return species ~= nil and species >= 1 and species <= 493
+        and level ~= nil and level >= 1 and level <= 100
+end
+
+local function battle_active_now(domain)
+    local pointer_offset = address_to_domain_offset(PLATINUM_PARTY_POINTER_ADDRESS)
+    local pointer_value = read_u32_le(domain, pointer_offset)
+    if pointer_value == nil then
+        return false
+    end
+    return (battler_record_active(domain, pointer_value, 0)
+            and battler_record_active(domain, pointer_value, 1))
+        or (battler_record_active(domain, pointer_value, 2)
+            and battler_record_active(domain, pointer_value, 3))
+end
+
+local function release_walk_input()
+    pcall(function()
+        joypad.set({Up = false, Down = false, Left = false, Right = false, B = false})
+    end)
+    friendship_walk.injected_direction = nil
+    friendship_walk.b_injected = false
+    friendship_walk.pending_direction = nil
+    friendship_walk.reversal_until_frame = nil
+    friendship_walk.release_pending = false
+end
+
+local function pause_friendship_walk(reason, status, release_input)
+    friendship_walk.enabled = false
+    friendship_walk.direction = nil
+    friendship_walk.pending_direction = nil
+    friendship_walk.reversal_until_frame = nil
+    friendship_walk.pause_reason = reason
+    friendship_walk.status = status
+    friendship_walk.release_pending = release_input ~= false
+end
+
+local function apply_friendship_walk(frame, domain)
+    if friendship_walk.enabled then
+        if os.time() - friendship_walk.last_command_time > WALK_COMMAND_LEASE_SECONDS then
+            pause_friendship_walk("command_stale", "Paused — Movement command channel lost", true)
+        else
+            local x, y = player_coordinates(domain)
+            if x == nil or y == nil then
+                pause_friendship_walk("coordinates", "Paused — Coordinates unavailable", true)
+            elseif battle_active_now(domain) then
+                pause_friendship_walk("battle", "Paused — Battle", true)
+            end
+        end
+    end
+
+    if friendship_walk.release_pending then
+        release_walk_input()
+    elseif friendship_walk.enabled then
+        if friendship_walk.pending_direction ~= nil
+            and frame >= (friendship_walk.reversal_until_frame or frame) then
+            friendship_walk.direction = friendship_walk.pending_direction
+            friendship_walk.pending_direction = nil
+            friendship_walk.reversal_until_frame = nil
+            friendship_walk.status = "Walking " .. friendship_walk.direction
+        end
+        local direction = friendship_walk.direction
+        local inputs = {
+            Up = direction == "Up",
+            Down = direction == "Down",
+            Left = direction == "Left",
+            Right = direction == "Right",
+            B = true,
+        }
+        local ok = pcall(function() joypad.set(inputs) end)
+        if ok then
+            friendship_walk.injected_direction = direction
+            friendship_walk.b_injected = true
+        else
+            pause_friendship_walk("command", "Paused — Controller unavailable", true)
+            release_walk_input()
+        end
+    end
 end
 
 local function party_memory_message(frame, domain)
@@ -325,6 +499,15 @@ local function party_memory_message(frame, domain)
         )
     end
 
+    local preview_x = coordinate_preview and read_coordinate(domain, coordinate_preview.x_offset, coordinate_preview.data_type) or nil
+    local preview_y = coordinate_preview and read_coordinate(domain, coordinate_preview.y_offset, coordinate_preview.data_type) or nil
+    local preview_previous_x = previous_preview_x
+    local preview_previous_y = previous_preview_y
+    local player_x, player_y = player_coordinates(domain)
+    local player_delta_x = player_x ~= nil and previous_player_x ~= nil
+        and player_x - previous_player_x or nil
+    local player_delta_y = player_y ~= nil and previous_player_y ~= nil
+        and player_y - previous_player_y or nil
     local message_fields = {
         {"type", "party_memory"},
         {"run_id", run_id},
@@ -332,6 +515,32 @@ local function party_memory_message(frame, domain)
         {"core", get_core_name()},
         {"domain", domain},
         {"main_ram_base", string.format("0x%08X", MAIN_RAM_BASE)},
+        {"coordinate_preview_x", preview_x},
+        {"coordinate_preview_y", preview_y},
+        {"coordinate_preview_previous_x", preview_previous_x},
+        {"coordinate_preview_previous_y", preview_previous_y},
+        {"coordinate_preview_x_offset", coordinate_preview and string.format("0x%08X", coordinate_preview.x_offset) or nil},
+        {"coordinate_preview_y_offset", coordinate_preview and string.format("0x%08X", coordinate_preview.y_offset) or nil},
+        {"coordinate_preview_type", coordinate_preview and coordinate_preview.data_type or nil},
+        {"player_x", player_x},
+        {"player_y", player_y},
+        {"player_delta_x", player_delta_x},
+        {"player_delta_y", player_delta_y},
+        {"player_coordinates_validated", true},
+        {"player_x_offset", string.format("0x%08X", PLAYER_X_OFFSET)},
+        {"player_y_offset", string.format("0x%08X", PLAYER_Y_OFFSET)},
+        {"friendship_walk_enabled", friendship_walk.enabled},
+        {"friendship_walk_mode", friendship_walk.mode},
+        {"friendship_walk_direction", friendship_walk.direction or friendship_walk.pending_direction},
+        {"friendship_walk_requested_direction", friendship_walk.direction or friendship_walk.pending_direction},
+        {"friendship_walk_injected_direction", friendship_walk.injected_direction},
+        {"friendship_walk_b_injected", friendship_walk.b_injected},
+        {"friendship_walk_reversal_until_frame", friendship_walk.reversal_until_frame},
+        {"friendship_walk_status", friendship_walk.status},
+        {"friendship_walk_pause_reason", friendship_walk.pause_reason},
+        {"friendship_walk_ack_sequence", friendship_walk.ack_sequence},
+        {"friendship_walk_ack_frame", friendship_walk.ack_frame},
+        {"friendship_walk_ack_action", friendship_walk.ack_action},
         {"pointer_address", string.format("0x%08X", PLATINUM_PARTY_POINTER_ADDRESS)},
         {"pointer_offset", string.format("0x%08X", pointer_offset)},
         {"pointer_value", pointer_value and string.format("0x%08X", pointer_value) or nil},
@@ -346,11 +555,326 @@ local function party_memory_message(frame, domain)
         {"pokemon_size", PARTY_POKEMON_SIZE},
         {"raw_party_hex", raw_party},
     }
+    if coordinate_preview then
+        if preview_x ~= nil and preview_y ~= nil then
+            previous_preview_x = preview_x
+            previous_preview_y = preview_y
+        end
+    else
+        previous_preview_x = nil
+        previous_preview_y = nil
+    end
+    if player_x ~= nil and player_y ~= nil then
+        previous_player_x = player_x
+        previous_player_y = player_y
+    else
+        previous_player_x = nil
+        previous_player_y = nil
+    end
     for _, field in ipairs(battle_battler_fields) do
         table.insert(message_fields, field)
     end
     local message = json_object(message_fields)
     return message
+end
+
+local function close_client()
+    if client ~= nil then
+        pcall(function() client:close() end)
+    end
+    client = nil
+    command_buffer = ""
+    if coordinate_scan ~= nil and coordinate_scan.transport == "tcp" then
+        coordinate_scan = nil
+    end
+end
+
+local function send_scan_error(capture_id, message, transport)
+    coordinate_scan = {
+        capture_id = capture_id,
+        stage = "error",
+        message = message,
+        transport = transport,
+        file_started = false,
+    }
+end
+
+local function process_command(line, frame, domain, transport)
+    line = line:gsub("\r", "")
+    local sequence, walk_mode = line:match("^WALK|(%d+)|START|(horizontal)$")
+    if sequence == nil then
+        sequence, walk_mode = line:match("^WALK|(%d+)|START|(vertical)$")
+    end
+    if sequence ~= nil then
+        local x, y = player_coordinates(domain)
+        if x == nil or y == nil then
+            pause_friendship_walk("coordinates", "Paused — Coordinates unavailable", true)
+        elseif battle_active_now(domain) then
+            pause_friendship_walk("battle", "Paused — Battle", true)
+        else
+            friendship_walk.enabled = true
+            friendship_walk.mode = walk_mode
+            friendship_walk.direction = walk_mode == "horizontal" and "Left" or "Up"
+            friendship_walk.pending_direction = nil
+            friendship_walk.reversal_until_frame = nil
+            friendship_walk.injected_direction = nil
+            friendship_walk.b_injected = false
+            friendship_walk.status = "Walking " .. friendship_walk.direction
+            friendship_walk.pause_reason = nil
+            -- This lease uses wall-clock time; movement/reversal remains frame-based.
+            friendship_walk.last_command_time = os.time()
+            friendship_walk.release_pending = false
+        end
+        friendship_walk.ack_sequence = tonumber(sequence)
+        friendship_walk.ack_frame = frame
+        friendship_walk.ack_action = "START"
+        return
+    end
+
+    sequence = line:match("^WALK|(%d+)|STOP$")
+    if sequence ~= nil then
+        friendship_walk.enabled = false
+        friendship_walk.direction = nil
+        friendship_walk.pending_direction = nil
+        friendship_walk.reversal_until_frame = nil
+        friendship_walk.injected_direction = nil
+        friendship_walk.b_injected = false
+        friendship_walk.status = "Idle"
+        friendship_walk.pause_reason = nil
+        friendship_walk.release_pending = true
+        friendship_walk.ack_sequence = tonumber(sequence)
+        friendship_walk.ack_frame = frame
+        friendship_walk.ack_action = "STOP"
+        return
+    end
+
+    sequence = line:match("^WALK|(%d+)|PING$")
+    if sequence ~= nil then
+        if friendship_walk.enabled then
+            friendship_walk.last_command_time = os.time()
+        end
+        friendship_walk.ack_sequence = tonumber(sequence)
+        friendship_walk.ack_frame = frame
+        friendship_walk.ack_action = "PING"
+        return
+    end
+    local direction_sequence, walk_direction = line:match("^WALK|(%d+)|DIRECTION|(Left)$")
+    if direction_sequence == nil then
+        direction_sequence, walk_direction = line:match("^WALK|(%d+)|DIRECTION|(Right)$")
+    end
+    if direction_sequence == nil then
+        direction_sequence, walk_direction = line:match("^WALK|(%d+)|DIRECTION|(Up)$")
+    end
+    if direction_sequence == nil then
+        direction_sequence, walk_direction = line:match("^WALK|(%d+)|DIRECTION|(Down)$")
+    end
+    if walk_direction ~= nil and friendship_walk.enabled then
+        friendship_walk.direction = nil
+        friendship_walk.pending_direction = walk_direction
+        friendship_walk.reversal_until_frame = frame + WALK_REVERSAL_GRACE_FRAMES
+        friendship_walk.injected_direction = nil
+        friendship_walk.status = "Blocked — reversing"
+        friendship_walk.last_command_time = os.time()
+        friendship_walk.ack_sequence = tonumber(direction_sequence)
+        friendship_walk.ack_frame = frame
+        friendship_walk.ack_action = "DIRECTION"
+        return
+    elseif direction_sequence ~= nil then
+        friendship_walk.ack_sequence = tonumber(direction_sequence)
+        friendship_walk.ack_frame = frame
+        friendship_walk.ack_action = "DIRECTION"
+        return
+    end
+    if line == "CLEAR_PREVIEW" then
+        coordinate_preview = nil
+        previous_preview_x = nil
+        previous_preview_y = nil
+        return
+    end
+    local x_offset, y_offset, data_type = line:match("^PREVIEW|(%d+)|(%d+)|(u16)$")
+    if x_offset == nil then
+        x_offset, y_offset, data_type = line:match("^PREVIEW|(%d+)|(%d+)|(s16)$")
+    end
+    if x_offset ~= nil then
+        coordinate_preview = {
+            x_offset = tonumber(x_offset),
+            y_offset = tonumber(y_offset),
+            data_type = data_type,
+        }
+        previous_preview_x = nil
+        previous_preview_y = nil
+        return
+    end
+
+    local capture_id, label, start_offset, length = line:match(
+        "^CAPTURE|([%w%-]+)|([%w]+)|(%d+)|(%d+)$"
+    )
+    if capture_id == nil then
+        return
+    end
+    if coordinate_scan ~= nil then
+        send_scan_error(
+            capture_id,
+            "Another coordinate capture is already in progress.",
+            transport
+        )
+        return
+    end
+    start_offset = tonumber(start_offset)
+    length = tonumber(length)
+    local total = domain_size(domain)
+    if domain == nil or total == nil or start_offset + length > total
+        or length < 2 or length > MAX_COORDINATE_SCAN_BYTES
+        or start_offset % 2 ~= 0 or length % 2 ~= 0 then
+        send_scan_error(
+            capture_id,
+            "Invalid Main RAM range or unavailable memory domain.",
+            transport
+        )
+        return
+    end
+    coordinate_scan = {
+        capture_id = capture_id,
+        label = label,
+        start_offset = start_offset,
+        length = length,
+        cursor = 0,
+        domain = domain,
+        stage = "start",
+        transport = transport,
+        file_started = false,
+    }
+end
+
+local function poll_command_file(frame, domain)
+    if COMMAND_FILE == nil
+        or frame - last_command_file_poll_frame < COMMAND_FILE_POLL_INTERVAL then
+        return
+    end
+    last_command_file_poll_frame = frame
+    local handle = io.open(COMMAND_FILE, "r")
+    if handle == nil then
+        return
+    end
+    local line = handle:read("*l")
+    handle:close()
+    os.remove(COMMAND_FILE)
+    if line ~= nil and line ~= "" then
+        process_command(line, frame, domain, "file")
+    end
+end
+
+local function poll_commands(frame, domain)
+    if client ~= nil then
+        for _ = 1, 4 do
+            local ok, line, receive_error, partial = pcall(function()
+                return client:receive("*l")
+            end)
+            if not ok then
+                close_client()
+                break
+            end
+            if line ~= nil then
+                local complete = command_buffer .. line
+                command_buffer = ""
+                process_command(complete, frame, domain, "tcp")
+            elseif partial ~= nil and partial ~= "" then
+                command_buffer = command_buffer .. partial
+                if #command_buffer > 256 then
+                    command_buffer = ""
+                end
+                break
+            elseif receive_error == "closed" then
+                close_client()
+                break
+            else
+                break
+            end
+        end
+    end
+    poll_command_file(frame, domain)
+end
+
+local function send_coordinate_event(scan, line, frame)
+    if scan.transport == "tcp" then
+        return send_line(line, frame)
+    end
+    if COORDINATE_SCAN_FILE == nil then
+        write_fallback(line)
+        return false
+    end
+    local mode = scan.file_started and "a" or "w"
+    local handle = io.open(COORDINATE_SCAN_FILE, mode)
+    if handle == nil then
+        write_fallback(line)
+        return false
+    end
+    handle:write(line)
+    handle:write("\n")
+    handle:close()
+    scan.file_started = true
+    return true
+end
+
+local function advance_coordinate_scan(frame)
+    local scan = coordinate_scan
+    if scan == nil then
+        return
+    end
+    if scan.transport == "tcp" and client == nil then
+        coordinate_scan = nil
+        return
+    end
+    if scan.transport == "tcp" and (pending_tcp_line ~= nil or queued_tcp_line ~= nil) then
+        return
+    end
+
+    if scan.stage == "error" then
+        send_coordinate_event(scan, json_object({
+            {"type", "coordinate_scan_error"},
+            {"capture_id", scan.capture_id},
+            {"message", scan.message},
+        }), frame)
+        coordinate_scan = nil
+        return
+    end
+    if scan.stage == "start" then
+        send_coordinate_event(scan, json_object({
+            {"type", "coordinate_scan_start"},
+            {"capture_id", scan.capture_id},
+            {"label", scan.label},
+            {"start_offset", scan.start_offset},
+            {"length", scan.length},
+        }), frame)
+        scan.stage = "chunks"
+        return
+    end
+    if scan.cursor < scan.length then
+        local chunk_length = math.min(COORDINATE_SCAN_CHUNK_BYTES, scan.length - scan.cursor)
+        local chunk = read_bytes(scan.domain, scan.start_offset + scan.cursor, chunk_length)
+        local encoded = bytes_to_hex(chunk, chunk_length)
+        if encoded == nil then
+            send_scan_error(
+                scan.capture_id,
+                "BizHawk could not read this RAM range.",
+                scan.transport
+            )
+            return
+        end
+        send_coordinate_event(scan, json_object({
+            {"type", "coordinate_scan_chunk"},
+            {"capture_id", scan.capture_id},
+            {"chunk_offset", scan.cursor},
+            {"data_hex", encoded},
+        }), frame)
+        scan.cursor = scan.cursor + chunk_length
+        return
+    end
+    send_coordinate_event(scan, json_object({
+        {"type", "coordinate_scan_end"},
+        {"capture_id", scan.capture_id},
+    }), frame)
+    coordinate_scan = nil
 end
 
 local function ensure_client(frame)
@@ -381,7 +905,7 @@ local function ensure_client(frame)
     return false
 end
 
-local function write_fallback(line)
+write_fallback = function(line)
     if FALLBACK_FILE == nil then
         return
     end
@@ -445,7 +969,7 @@ local function flush_tcp()
     end
 end
 
-local function send_line(line, frame)
+send_line = function(line, frame)
     if ensure_client(frame) and client ~= nil then
         local data = line .. "\n"
         if pending_tcp_line == nil then
@@ -471,6 +995,10 @@ local domain_refresh_ticks = 0
 local last_heartbeat_frame = nil
 local last_party_frame = nil
 
+if COMMAND_FILE ~= nil then
+    os.remove(COMMAND_FILE)
+end
+
 while true do
     local frame = get_frame_count()
     flush_tcp()
@@ -485,27 +1013,56 @@ while true do
         domain_refresh_ticks = 0
     end
 
-    if frame ~= last_heartbeat_frame and frame % HEARTBEAT_INTERVAL == 0 then
-        last_heartbeat_frame = frame
-        local reads = diagnostic_reads(active_domain)
-        local message = json_object({
-            {"type", "heartbeat"},
-            {"run_id", run_id},
-            {"frame", frame},
-            {"core", get_core_name()},
-            {"domains", domains},
-            {"active_domain", active_domain},
-            {"diagnostic_reads", "__READS__"},
-            {"transport", socket and "tcp_or_file" or "file"},
-            {"connected", client ~= nil},
-        })
-        message = message:gsub("\"__READS__\"", "[" .. table.concat(reads, ",") .. "]")
-        send_line(message, frame)
-    end
-    if frame ~= last_party_frame and frame % PARTY_INTERVAL == 0 then
-        last_party_frame = frame
-        local message = party_memory_message(frame, active_domain)
-        send_line(message, frame)
+    poll_commands(frame, active_domain)
+    apply_friendship_walk(frame, active_domain)
+    if coordinate_scan ~= nil then
+        if frame ~= last_party_frame and frame % PARTY_INTERVAL == 0 then
+            last_party_frame = frame
+            send_line(party_memory_message(frame, active_domain), frame)
+        end
+        if frame ~= last_heartbeat_frame and frame % HEARTBEAT_INTERVAL == 0
+            and pending_tcp_line == nil and queued_tcp_line == nil then
+            last_heartbeat_frame = frame
+            local reads = diagnostic_reads(active_domain)
+            local message = json_object({
+                {"type", "heartbeat"},
+                {"run_id", run_id},
+                {"frame", frame},
+                {"core", get_core_name()},
+                {"domains", domains},
+                {"active_domain", active_domain},
+                {"diagnostic_reads", "__READS__"},
+                {"transport", socket and "tcp_or_file" or "file"},
+                {"connected", client ~= nil},
+            })
+            message = message:gsub("\"__READS__\"", "[" .. table.concat(reads, ",") .. "]")
+            send_line(message, frame)
+        else
+            advance_coordinate_scan(frame)
+        end
+    else
+        if frame ~= last_heartbeat_frame and frame % HEARTBEAT_INTERVAL == 0 then
+            last_heartbeat_frame = frame
+            local reads = diagnostic_reads(active_domain)
+            local message = json_object({
+                {"type", "heartbeat"},
+                {"run_id", run_id},
+                {"frame", frame},
+                {"core", get_core_name()},
+                {"domains", domains},
+                {"active_domain", active_domain},
+                {"diagnostic_reads", "__READS__"},
+                {"transport", socket and "tcp_or_file" or "file"},
+                {"connected", client ~= nil},
+            })
+            message = message:gsub("\"__READS__\"", "[" .. table.concat(reads, ",") .. "]")
+            send_line(message, frame)
+        end
+        if frame ~= last_party_frame and frame % PARTY_INTERVAL == 0 then
+            last_party_frame = frame
+            local message = party_memory_message(frame, active_domain)
+            send_line(message, frame)
+        end
     end
     emu.frameadvance()
 end

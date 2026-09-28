@@ -23,6 +23,9 @@ class PlatinumMemoryProfile:
     )
     battle_battler_stride: int = 0xC0
     battle_battler_record_size: int = 0xC0
+    player_x_offset: int = 0x001C5AFE
+    player_y_offset: int = 0x001C5B02
+    player_coordinates_validated: bool = True
     party_pokemon_size: int = 236
     max_party_slots: int = 6
 

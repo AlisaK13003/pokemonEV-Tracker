@@ -10,6 +10,7 @@ def test_settings_round_trip(tmp_path) -> None:
     original = AppSettings(
         compact_mode=True,
         tracker_view="stats",
+        friendship_walk_axis="vertical",
         window_geometry=(-1200, 55, 744, 620),
         normal_window_geometry=(20, 30, 1260, 850),
     )
@@ -21,6 +22,7 @@ def test_settings_round_trip(tmp_path) -> None:
     assert set(json.loads(path.read_text(encoding="utf-8"))) == {
         "compact_mode",
         "tracker_view",
+        "friendship_walk_axis",
         "window_geometry",
         "normal_window_geometry",
     }
@@ -66,6 +68,7 @@ def test_load_default_migrates_only_tracker_preferences(monkeypatch, tmp_path) -
     assert set(json.loads(destination.read_text(encoding="utf-8"))) == {
         "compact_mode",
         "tracker_view",
+        "friendship_walk_axis",
         "window_geometry",
         "normal_window_geometry",
     }
@@ -77,3 +80,10 @@ def test_unknown_tracker_view_defaults_to_training(tmp_path) -> None:
     path.write_text('{"tracker_view": "unrecognized"}', encoding="utf-8")
 
     assert AppSettings.load(path).tracker_view == "training"
+
+
+def test_invalid_friendship_walk_axis_defaults_to_horizontal(tmp_path) -> None:
+    path = tmp_path / "invalid-axis.json"
+    path.write_text('{"friendship_walk_axis": ["vertical"]}', encoding="utf-8")
+
+    assert AppSettings.load(path).friendship_walk_axis == "horizontal"

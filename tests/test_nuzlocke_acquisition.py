@@ -385,6 +385,97 @@ def test_starter_route_201_does_not_consume_route_and_later_catch_maps_normally(
     assert run.encounters["platinum-starter"].species == "Piplup"
 
 
+def test_first_party_member_after_empty_baseline_is_suggested_as_starter(tmp_path) -> None:
+    store = NuzlockeStore(tmp_path / "runs.json")
+    run = store.create_run("Platinum", PLATINUM_NUZLOCKE_PROFILE)
+    observer = PartyAcquisitionObserver()
+    assert observer.observe(
+        (),
+        connected=True,
+        valid_snapshot=True,
+        run=run,
+        store=store,
+        classify=classify_platinum_acquisition,
+    ) == ()
+
+    # Some Platinum RAM records do not carry the level/origin metadata the old
+    # starter heuristic expected, even though this is the first party member.
+    starter = _candidate(
+        "pid:piplup",
+        species_id=393,
+        species_name="Piplup",
+        met_level=4,
+        origin_game=0,
+    )
+    events = observer.observe(
+        (starter,),
+        connected=True,
+        valid_snapshot=True,
+        run=run,
+        store=store,
+        classify=classify_platinum_acquisition,
+        classify_first_party=lambda candidate, active_run: classify_platinum_acquisition(
+            candidate, active_run, first_party_member=True
+        ),
+    )
+
+    assert len(events) == 1
+    assert (events[0].source, events[0].suggested_location_id) == (
+        "STARTER",
+        "platinum-starter",
+    )
+
+    later_catch = _candidate("pid:starly", species_id=396, species_name="Starly")
+    later_events = observer.observe(
+        (starter, later_catch),
+        connected=True,
+        valid_snapshot=True,
+        run=run,
+        store=store,
+        classify=classify_platinum_acquisition,
+        classify_first_party=lambda candidate, active_run: classify_platinum_acquisition(
+            candidate, active_run, first_party_member=True
+        ),
+    )
+    assert len(later_events) == 1
+    assert later_events[0].source != "STARTER"
+
+
+def test_first_party_starter_assumption_is_disabled_for_populated_baseline(tmp_path) -> None:
+    store = NuzlockeStore(tmp_path / "runs.json")
+    run = store.create_run("Platinum", PLATINUM_NUZLOCKE_PROFILE)
+    observer = PartyAcquisitionObserver()
+    existing = _candidate("pid:existing", species_id=393, species_name="Piplup")
+    observer.observe(
+        (existing,),
+        connected=True,
+        valid_snapshot=True,
+        run=run,
+        store=store,
+        classify=classify_platinum_acquisition,
+        classify_first_party=lambda candidate, active_run: classify_platinum_acquisition(
+            candidate, active_run, first_party_member=True
+        ),
+    )
+
+    later = _candidate("pid:later", species_id=393, species_name="Piplup")
+    events = observer.observe(
+        (existing, later),
+        connected=True,
+        valid_snapshot=True,
+        run=run,
+        store=store,
+        classify=classify_platinum_acquisition,
+        classify_first_party=lambda candidate, active_run: classify_platinum_acquisition(
+            candidate, active_run, first_party_member=True
+        ),
+    )
+
+    assert len(events) == 1
+    assert events[0].source != "STARTER"
+    assert events[0].suggested_location_id == _location_id("Route 201")
+
+
 def test_gible_route_201_is_not_misclassified_as_starter(tmp_path) -> None:
     gible = _candidate("pid:gible", species_id=443, species_name="Gible", met_level=5)
     run = NuzlockeStore(tmp_path / "runs.json").create_run("Platinum", PLATINUM_NUZLOCKE_PROFILE)

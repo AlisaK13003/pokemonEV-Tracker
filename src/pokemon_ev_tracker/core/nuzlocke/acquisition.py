@@ -33,6 +33,7 @@ class PartyAcquisitionObserver:
         self._connected = False
         self._run_id: str | None = None
         self._baseline_ids: set[str] = set()
+        self._empty_party_baseline = False
 
     def observe(
         self,
@@ -43,11 +44,13 @@ class PartyAcquisitionObserver:
         run: NuzlockeRun | None,
         store: NuzlockeStore,
         classify: Classifier,
+        classify_first_party: Classifier | None = None,
     ) -> tuple[PokemonAcquisitionEvent, ...]:
         if not connected:
             self._connected = False
             self._baseline_ids.clear()
             self._run_id = run.run_id if run else None
+            self._empty_party_baseline = False
             return ()
         if not valid_snapshot:
             return ()
@@ -57,11 +60,22 @@ class PartyAcquisitionObserver:
             if run:
                 store.mark_pokemon_observed(run.run_id, sorted(current))
             self._baseline_ids = current
+            self._empty_party_baseline = not current
             self._run_id = run.run_id if run else None
             self._connected = True
             return ()
 
         newly_seen = current - self._baseline_ids
+        first_party_candidate_id = (
+            next(
+                (candidate.stable_id for candidate in candidates if candidate.stable_id in newly_seen),
+                None,
+            )
+            if self._empty_party_baseline
+            else None
+        )
+        if newly_seen:
+            self._empty_party_baseline = False
         self._baseline_ids = current
         if run is None:
             return ()
@@ -72,7 +86,12 @@ class PartyAcquisitionObserver:
                 continue
             if store.has_observed_pokemon(run.run_id, candidate.stable_id):
                 continue
-            source, confidence, suggested_location_id = classify(candidate, run)
+            classifier = (
+                classify_first_party
+                if candidate.stable_id == first_party_candidate_id and classify_first_party
+                else classify
+            )
+            source, confidence, suggested_location_id = classifier(candidate, run)
             event = PokemonAcquisitionEvent(
                 stable_id=candidate.stable_id,
                 species_id=candidate.species_id,

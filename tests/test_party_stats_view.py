@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import os
+from dataclasses import replace
+from itertools import pairwise
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
+from PySide6.QtCore import QPoint, Qt
 from PySide6.QtWidgets import QApplication
 
 from pokemon_ev_tracker.config.settings import AppSettings
@@ -23,6 +26,7 @@ from pokemon_ev_tracker.pokemon.gen4.crypto import (
 )
 from pokemon_ev_tracker.pokemon.gen4.structure import PARTY_POKEMON_SIZE
 from pokemon_ev_tracker.ui.main_window import MainWindow
+from pokemon_ev_tracker.ui.party_card import PartyCardSize
 
 
 @pytest.fixture
@@ -41,6 +45,323 @@ def make_window(monkeypatch, tmp_path):
 
     yield create
     assert app is not None
+
+
+@pytest.mark.parametrize("compact", [False, True])
+def test_ram_warning_footer_never_reflows_tracker_controls(make_window, compact) -> None:
+    app = QApplication.instance()
+    window = make_window()
+    window.resize(640, 520)
+    if compact:
+        window.set_compact_mode(True)
+    window.show()
+    app.processEvents()
+
+    valid_state = decode_party(_party_payload((_party_record(0x12345678, 183, 47, attack=27),)))
+    warning_text = (
+        "RAM checksum failed for slot(s) 3; showing the last valid matching-PID sample. "
+        "This full message remains available in the status tooltip."
+    )
+    warning_state = replace(valid_state, live_read_warning=warning_text)
+    window._refresh_tracker_party(True, valid_state)
+    app.processEvents()
+    start_button = window.start_friendship_walk_button
+    original_y = start_button.mapToGlobal(QPoint(0, 0)).y()
+
+    window._refresh_tracker_party(True, warning_state)
+    app.processEvents()
+    assert start_button.mapToGlobal(QPoint(0, 0)).y() == original_y
+    assert window.statusBar().isAncestorOf(window.tracker_status_message)
+    assert window.tracker_layout.indexOf(window.tracker_status_message) == -1
+    assert not window.tracker_status_message.wordWrap()
+    assert window.tracker_status_message.toolTip() == warning_text
+    assert window.statusBar().height() == 26
+    if compact:
+        assert window.tracker_status_message.text() == "⚠ RAM checksum warning"
+
+    window._refresh_tracker_party(True, valid_state)
+    app.processEvents()
+    assert start_button.mapToGlobal(QPoint(0, 0)).y() == original_y
+    assert window.tracker_status_message.text() == "BizHawk RAM • CONNECTED"
+    assert window.tracker_status_message.toolTip() == ""
+    window.close()
+
+
+def test_tracker_cards_reflow_and_scroll_at_desktop_breakpoints(make_window) -> None:
+    app = QApplication.instance()
+    window = make_window()
+    window.show()
+    party = decode_party(
+        _party_payload(
+            tuple(
+                _party_record(0x1000 + slot, 183 + slot, 47, attack=20 + slot)
+                for slot in range(6)
+            )
+        )
+    )
+    window._refresh_tracker_party(True, party)
+
+    expected_layouts = (
+        (1400, PartyCardSize.LARGE, 3),
+        (1000, PartyCardSize.MEDIUM, 3),
+        (800, PartyCardSize.SMALL, 3),
+        (600, PartyCardSize.SMALL, 2),
+    )
+    for width, card_size, columns in expected_layouts:
+        window.resize(width, 500)
+        app.processEvents()
+        assert window.party_grid.card_size is card_size
+        assert window.party_grid.columns == columns, (
+            f"window={window.width()} page={window.tracker_scroll_area.widget().width()} "
+            f"grid={window.party_grid.width()} viewport="
+            f"{window.tracker_scroll_area.viewport().width()}"
+        )
+        assert window.tracker_scroll_area.horizontalScrollBarPolicy() == (
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        visible_cards = [
+            card["widget"]
+            for card in window.tracker_party_cards.values()
+            if not card["widget"].isHidden()
+        ]
+        assert len(visible_cards) == 6
+        assert max(card.geometry().right() for card in visible_cards) <= window.party_grid.width()
+
+        rows = [
+            visible_cards[index : index + columns]
+            for index in range(0, len(visible_cards), columns)
+        ]
+        assert len({row[0].geometry().x() for row in rows}) == 1
+        for row in rows:
+            assert all(
+                card_size.minimum_width
+                <= card.width()
+                <= card_size.preferred_width
+                for card in row
+            )
+            for previous, following in pairwise(row):
+                assert (
+                    following.geometry().x()
+                    - previous.geometry().x()
+                    - previous.geometry().width()
+                ) == window.party_grid.HORIZONTAL_SPACING
+        for previous_row, following_row in pairwise(rows):
+            previous_bottom = max(
+                card.geometry().y() + card.geometry().height()
+                for card in previous_row
+            )
+            assert (
+                following_row[0].geometry().y() - previous_bottom
+            ) == window.party_grid.VERTICAL_SPACING
+
+    assert window.tracker_scroll_area.widgetResizable()
+    assert window.tracker_scroll_area.verticalScrollBar().maximum() > 0
+    window._geometry_save_timer.stop()
+    window.close()
+
+
+def test_small_cards_collapse_details_but_keep_ev_summary(make_window) -> None:
+    app = QApplication.instance()
+    window = make_window()
+    window.resize(600, 500)
+    window.show()
+    party = decode_party(_party_payload((_party_record(0x1234, 183, 47, attack=20),)))
+    window._refresh_tracker_party(True, party)
+    app.processEvents()
+
+    card = window.tracker_party_cards[1]
+    assert card["card_size"] is PartyCardSize.SMALL
+    assert card["sprite"].width() == PartyCardSize.SMALL.sprite_size
+    assert not card["ev_section"].is_expanded
+    assert card["total"].isVisible()
+    assert card["total_bar"].isVisible()
+
+    window.set_tracker_view("stats")
+    app.processEvents()
+    assert not card["stats_section"].is_expanded
+    assert not card["moves_section"].is_expanded
+    assert not card["friendship_section"].is_expanded
+
+    window.resize(1000, 650)
+    app.processEvents()
+    assert card["card_size"] is PartyCardSize.MEDIUM
+    assert card["stats_section"].is_expanded
+    assert card["friendship_section"].is_expanded
+    window._geometry_save_timer.stop()
+    window.close()
+
+
+def test_party_sections_collapse_and_ev_log_scrolls_internally(make_window) -> None:
+    app = QApplication.instance()
+    window = make_window()
+    window.resize(900, 650)
+    window.show()
+    party_state = decode_party(
+        _party_payload((_party_record(3, 183, 47, attack=27),))
+    )
+    window._refresh_tracker_party(True, party_state)
+    app.processEvents()
+    card = window.tracker_party_cards[1]
+    expanded_height = card["widget"].sizeHint().height()
+    card["ev_section"].toggle.click()
+    app.processEvents()
+    assert card["ev_section"].content.isHidden()
+    assert card["widget"].sizeHint().height() < expanded_height
+
+    records = [
+        (f"15:42:{index:02d}   sheepy   Attack 0 -> 1   +1", "+1 Attack")
+        for index in range(80)
+    ]
+    window._ev_history_records = records
+    window._render_ev_history()
+    app.processEvents()
+    assert window.ev_change_list.maximumHeight() <= 230
+    assert window.ev_change_list.verticalScrollBar().maximum() > 0
+    window._geometry_save_timer.stop()
+    window.close()
+
+
+@pytest.mark.parametrize("width", (700, 900, 1400))
+def test_party_stats_accordions_grow_to_show_all_content(make_window, width: int) -> None:
+    app = QApplication.instance()
+    window = make_window()
+    window.resize(width, 520)
+    window.show()
+    party_state = decode_party(
+        _party_payload((_party_record(0x12345678, 183, 47, attack=27),))
+    )
+    window._refresh_tracker_party(True, party_state)
+    window.set_tracker_view("stats")
+    app.processEvents()
+
+    card = window.tracker_party_cards[1]
+    card["moves_list"].setText("Quick Attack\nGrowl\nPound\nThunderbolt")
+    sections = ("stats_section", "moves_section", "friendship_section")
+    for key in sections:
+        card[key].toggle.setChecked(False)
+    app.processEvents()
+    previous_height = card["widget"].height()
+
+    for key in sections:
+        card[key].toggle.setChecked(True)
+        app.processEvents()
+        assert card["widget"].height() > previous_height
+        previous_height = card["widget"].height()
+
+    stats = card["stats_section"]
+    assert stats.content.height() >= stats.content.sizeHint().height()
+    assert all(
+        label.isVisible() and label.geometry().bottom() < stats.content.height()
+        for label in card["stat_names"].values()
+    )
+    assert card["moves_list"].text().splitlines() == [
+        "Quick Attack", "Growl", "Pound", "Thunderbolt"
+    ]
+    assert card["moves_list"].height() >= card["moves_list"].sizeHint().height()
+    assert card["friendship_bar"].isVisible()
+    assert card["friendship_bar"].geometry().height() > 0
+    assert window.tracker_scroll_area.verticalScrollBar().maximum() > 0
+
+    window.set_tracker_view("training")
+    app.processEvents()
+    card["ev_section"].toggle.setChecked(False)
+    card["target_section"].toggle.setChecked(False)
+    app.processEvents()
+    training_height = card["widget"].height()
+    card["ev_section"].toggle.setChecked(True)
+    app.processEvents()
+    ev_height = card["widget"].height()
+    assert ev_height > training_height
+    card["target_section"].toggle.setChecked(True)
+    app.processEvents()
+    assert card["widget"].height() > ev_height
+    window.close()
+
+
+def test_party_card_header_stays_compact_when_window_grows(make_window) -> None:
+    app = QApplication.instance()
+    window = make_window()
+    window.resize(900, 520)
+    window.show()
+    party_state = decode_party(
+        _party_payload((_party_record(0x12345678, 183, 47, attack=27),))
+    )
+    window._refresh_tracker_party(True, party_state)
+    window.set_tracker_view("stats")
+    app.processEvents()
+
+    card = window.tracker_party_cards[1]
+    assert card["item_name"].text() == "No held item"
+    assert card["item_name"].height() <= 24
+    header = card["widget"].layout().itemAt(0).geometry()
+    header_height = header.height()
+    stats_top = card["widget"].layout().itemAt(2).geometry().top()
+    assert 0 <= stats_top - header.bottom() - 1 <= 12
+
+    window.resize(900, 820)
+    app.processEvents()
+    new_header = card["widget"].layout().itemAt(0).geometry()
+    assert new_header.height() == header_height
+    assert card["widget"].height() == card["widget"].sizeHint().height()
+    window.close()
+
+
+def test_party_grid_keeps_card_heights_independent_and_rows_below_tallest(make_window) -> None:
+    app = QApplication.instance()
+    window = make_window()
+    window.resize(1400, 600)
+    window.show()
+    party_state = decode_party(
+        _party_payload(
+            tuple(
+                _party_record(0x1000 + slot, 183 + slot, 47, attack=20 + slot)
+                for slot in range(1, 7)
+            )
+        )
+    )
+    window._refresh_tracker_party(True, party_state)
+    window.set_tracker_view("stats")
+    app.processEvents()
+
+    first = [window.tracker_party_cards[slot] for slot in (1, 2, 3)]
+    for card in first:
+        for key in ("stats_section", "moves_section", "friendship_section"):
+            card[key].toggle.setChecked(False)
+    first[1]["stats_section"].toggle.setChecked(True)
+    first[2]["moves_list"].setText("Move 1\nMove 2\nMove 3\nMove 4")
+    first[2]["moves_section"].toggle.setChecked(True)
+    first[2]["friendship_section"].toggle.setChecked(True)
+    app.processEvents()
+
+    heights = [card["widget"].height() for card in first]
+    assert len(set(heights)) > 1
+    second_row_y = window.tracker_party_cards[4]["widget"].geometry().top()
+    tallest_bottom = max(
+        card["widget"].geometry().bottom() for card in first
+    )
+    assert second_row_y == tallest_bottom + 1 + window.party_grid.VERTICAL_SPACING
+    assert window.party_grid._grid.rowStretch(0) == 0
+    assert window.party_grid._grid.rowStretch(1) == 0
+    window.close()
+
+
+def test_nuzlocke_tables_remain_locally_scrollable_at_narrow_width(make_window) -> None:
+    app = QApplication.instance()
+    window = make_window()
+    window.nuzlocke_view.store.create_run("Narrow layout", PLATINUM_NUZLOCKE_PROFILE)
+    window.nuzlocke_view._refresh_all()
+    window.resize(620, 500)
+    window.show()
+    window.main_tabs.setCurrentIndex(2)
+    app.processEvents()
+
+    assert window.nuzlocke_scroll_area.widgetResizable()
+    assert window.nuzlocke_scroll_area.horizontalScrollBarPolicy() == (
+        Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+    )
+    assert window.nuzlocke_view.encounters_table.horizontalScrollBar().maximum() > 0
+    window._geometry_save_timer.stop()
+    window.close()
 
 
 def test_training_stats_toggle_hides_log_without_clearing_history(make_window) -> None:
@@ -122,10 +443,9 @@ def test_nature_highlights_only_boosted_and_lowered_non_hp_stats(make_window) ->
     card = window.tracker_party_cards[1]
 
     assert card["nature"].text() == "Nature: Adamant"
-    assert "#df8585" in card["stat_names"]["attack"].styleSheet()
-    assert "#86aee0" in card["stat_names"]["special_attack"].styleSheet()
-    assert "#df8585" not in card["stat_names"]["hp"].styleSheet()
-    assert "#86aee0" not in card["stat_names"]["hp"].styleSheet()
+    assert card["stat_names"]["attack"].property("natureRole") == "up"
+    assert card["stat_names"]["special_attack"].property("natureRole") == "down"
+    assert card["stat_names"]["hp"].property("natureRole") == "neutral"
     window.close()
 
 
