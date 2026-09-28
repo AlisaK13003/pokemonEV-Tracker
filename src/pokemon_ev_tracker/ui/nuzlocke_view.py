@@ -126,6 +126,13 @@ class NuzlockeView(QWidget):
         self.complete_cap_button = QPushButton("Mark Fight Completed")
         cap_heading.addWidget(self.complete_cap_button)
         cap_layout.addLayout(cap_heading)
+        self.healing_item_hint_label = QLabel()
+        self.healing_item_hint_label.setStyleSheet("color: #aeb8c2; font-size: 11px;")
+        self.healing_item_hint_label.setToolTip(
+            "The opposing trainer's configured healing-item inventory. The battle AI may not "
+            "use every item. Held items and out-of-battle healing are not included."
+        )
+        cap_layout.addWidget(self.healing_item_hint_label)
         self.party_warning_label = QLabel()
         self.party_warning_label.setWordWrap(True)
         self.party_warning_label.setStyleSheet("color: #e4b562;")
@@ -1068,9 +1075,24 @@ class NuzlockeView(QWidget):
         )
         if cap:
             self.next_cap_label.setText(f"{cap.name}  ·  Lv. {cap.level_cap}")
+            if cap.healing_item_count is None:
+                self.healing_item_hint_label.setText("Opponent healing items: unknown")
+            else:
+                breakdown = ", ".join(
+                    f"{name} x{count}" for name, count in (cap.healing_items or ())
+                )
+                hint = (
+                    f"Opponent healing items: {cap.healing_item_count}"
+                    if cap.healing_item_count
+                    else "Opponent healing items: none"
+                )
+                self.healing_item_hint_label.setText(
+                    f"{hint} ({breakdown})" if breakdown else hint
+                )
             self.complete_cap_button.setEnabled(True)
         else:
             self.next_cap_label.setText("All listed fights completed")
+            self.healing_item_hint_label.clear()
             self.complete_cap_button.setEnabled(False)
         over = over_cap_party_members(self.party_levels, cap.level_cap if cap else None)
         if over:

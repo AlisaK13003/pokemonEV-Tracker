@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pokemon_ev_tracker.games.platinum.abilities import get_platinum_ability
 from pokemon_ev_tracker.games.platinum.items import get_gen4_item_name
 from pokemon_ev_tracker.games.platinum.locations import platinum_met_location_name
+from pokemon_ev_tracker.games.platinum.moves import get_platinum_move_name
 from pokemon_ev_tracker.games.platinum.species import Species, load_gen4_species
 from pokemon_ev_tracker.pokemon.gen4.structure import (
     PARTY_POKEMON_SIZE,
@@ -26,6 +27,7 @@ class PartyPokemon:
     nickname: str
     held_item_id: int
     held_item_name: str | None
+    moves: tuple[str, ...]
     friendship: int
     level: int | None
     current_hp: int | None
@@ -122,6 +124,11 @@ def decode_party(
                 nickname=decoded.nickname or species,
                 held_item_id=decoded.held_item_id,
                 held_item_name=get_gen4_item_name(decoded.held_item_id),
+                moves=tuple(
+                    name
+                    for move_id in decoded.move_ids
+                    if (name := get_platinum_move_name(move_id)) is not None
+                ),
                 friendship=decoded.friendship,
                 level=decoded.level,
                 current_hp=decoded.current_hp,

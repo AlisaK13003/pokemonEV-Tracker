@@ -74,25 +74,35 @@ PLATINUM_RETIRED_DEFAULT_LOCATIONS = tuple(
 PLATINUM_LOCATIONS = PLATINUM_NUZLOCKE_LOCATIONS
 
 _FIGHTS = (
-    ("Roark", "Gym Leader", 14),
-    ("Mars - Valley Windworks", "Galactic Boss", 16),
-    ("Gardenia", "Gym Leader", 22),
-    ("Jupiter - Eterna Building", "Galactic Boss", 22),
-    ("Fantina", "Gym Leader", 26),
-    ("Maylene", "Gym Leader", 32),
-    ("Crasher Wake", "Gym Leader", 30),
-    ("Cyrus - Veilstone HQ", "Galactic Boss", 40),
-    ("Byron", "Gym Leader", 41),
-    ("Mars & Jupiter - Spear Pillar", "Galactic Boss", 45),
-    ("Cyrus - Distortion World", "Galactic Boss", 46),
-    ("Candice", "Gym Leader", 42),
-    ("Volkner", "Gym Leader", 50),
-    ("Barry - Victory Road", "Rival", 53),
-    ("Aaron", "Elite Four", 57),
-    ("Bertha", "Elite Four", 59),
-    ("Flint", "Elite Four", 61),
-    ("Lucian", "Elite Four", 63),
-    ("Cynthia", "Champion", 66),
+    ("Barry - Route 201", "Rival", 5, ()),
+    ("Barry - Route 203", "Rival", 9, ()),
+    ("Roark", "Gym Leader", 14, (("Potion", 2),)),
+    ("Mars - Valley Windworks", "Galactic Boss", 16, ()),
+    ("Gardenia", "Gym Leader", 22, (("Super Potion", 2),)),
+    ("Jupiter - Eterna Building", "Galactic Boss", 22, ()),
+    ("Fantina", "Gym Leader", 26, (("Super Potion", 2),)),
+    ("Barry - Route 209", "Rival", 27, ()),
+    ("Maylene", "Gym Leader", 32, ()),
+    ("Barry - Pastoria City", "Rival", 36, ()),
+    ("Crasher Wake", "Gym Leader", 30, (("Hyper Potion", 2),)),
+    (
+        "Cyrus - Veilstone HQ",
+        "Galactic Boss",
+        40,
+        (("Hyper Potion", 1), ("Full Restore", 1)),
+    ),
+    ("Barry - Canalave City", "Rival", 38, ()),
+    ("Byron", "Gym Leader", 41, (("Hyper Potion", 1), ("Full Restore", 1))),
+    ("Mars & Jupiter - Spear Pillar", "Galactic Boss", 45, ()),
+    ("Cyrus - Distortion World", "Galactic Boss", 46, (("Full Restore", 2),)),
+    ("Candice", "Gym Leader", 42, (("Hyper Potion", 1), ("Full Restore", 1))),
+    ("Volkner", "Gym Leader", 50, (("Hyper Potion", 1), ("Full Restore", 1))),
+    ("Barry - Pokémon League", "Rival", 51, ()),
+    ("Aaron", "Elite Four", 57, (("Full Restore", 2),)),
+    ("Bertha", "Elite Four", 59, (("Full Restore", 2),)),
+    ("Flint", "Elite Four", 61, (("Full Restore", 2),)),
+    ("Lucian", "Elite Four", 63, (("Full Restore", 2),)),
+    ("Cynthia", "Champion", 66, (("Full Restore", 4),)),
 )
 
 PLATINUM_LEVEL_CAPS = tuple(
@@ -102,8 +112,9 @@ PLATINUM_LEVEL_CAPS = tuple(
         category=category,
         order=index,
         level_cap=level,
+        healing_items=healing_items,
     )
-    for index, (name, category, level) in enumerate(_FIGHTS)
+    for index, (name, category, level, healing_items) in enumerate(_FIGHTS)
 )
 
 PLATINUM_NUZLOCKE_PROFILE = NuzlockeGameProfile(

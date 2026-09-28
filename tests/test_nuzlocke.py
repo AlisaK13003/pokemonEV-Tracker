@@ -120,8 +120,43 @@ def test_platinum_profile_has_ordered_locations_and_caps() -> None:
     assert len(PLATINUM_RETIRED_DEFAULT_LOCATIONS) == 17
     assert len(profile.level_caps) >= 15
     assert [item.order for item in profile.level_caps] == list(range(len(profile.level_caps)))
-    assert profile.level_caps[0].name == "Roark"
+    rival_caps = {
+        item.name: item.level_cap
+        for item in profile.level_caps
+        if item.category == "Rival"
+    }
+    assert rival_caps == {
+        "Barry - Route 201": 5,
+        "Barry - Route 203": 9,
+        "Barry - Route 209": 27,
+        "Barry - Pastoria City": 36,
+        "Barry - Canalave City": 38,
+        "Barry - Pokémon League": 51,
+    }
+    assert "Barry - Victory Road" not in {item.name for item in profile.level_caps}
     assert profile.level_caps[-1].name == "Cynthia"
+
+
+def test_platinum_level_caps_include_trainer_healing_item_limits() -> None:
+    caps = {cap.name: cap for cap in PLATINUM_NUZLOCKE_PROFILE.level_caps}
+
+    assert all(cap.healing_item_count is not None for cap in caps.values())
+    assert caps["Barry - Route 203"].healing_items == ()
+    assert caps["Roark"].healing_items == (("Potion", 2),)
+    assert caps["Gardenia"].healing_items == (("Super Potion", 2),)
+    assert caps["Fantina"].healing_items == (("Super Potion", 2),)
+    assert caps["Maylene"].healing_item_count == 0
+    assert caps["Crasher Wake"].healing_items == (("Hyper Potion", 2),)
+    assert caps["Cyrus - Veilstone HQ"].healing_items == (
+        ("Hyper Potion", 1),
+        ("Full Restore", 1),
+    )
+    assert caps["Byron"].healing_items == (("Hyper Potion", 1), ("Full Restore", 1))
+    assert caps["Candice"].healing_items == (("Hyper Potion", 1), ("Full Restore", 1))
+    assert caps["Volkner"].healing_items == (("Hyper Potion", 1), ("Full Restore", 1))
+    assert caps["Barry - Pokémon League"].healing_item_count == 0
+    assert caps["Cynthia"].healing_items == (("Full Restore", 4),)
+    assert caps["Barry - Route 201"].healing_item_count == 0
 
 
 def test_location_cleanup_removes_only_pristine_retired_defaults(tmp_path) -> None:

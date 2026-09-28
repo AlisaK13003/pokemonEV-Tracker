@@ -182,6 +182,13 @@ class PartyCard(QGroupBox):
         stats_layout.addWidget(ability)
         stats_layout.addWidget(friendship)
         stats_layout.addWidget(friendship_bar)
+        moves_heading = QLabel("Moves")
+        moves_heading.setStyleSheet("font-weight: 600; color: #d7dce2;")
+        moves_list = QLabel("No moves decoded")
+        moves_list.setWordWrap(True)
+        moves_list.setStyleSheet(f"color: {SECONDARY_TEXT_COLOR};")
+        stats_layout.addWidget(moves_heading)
+        stats_layout.addWidget(moves_list)
         stats_grid = QGridLayout()
         stats_grid.setContentsMargins(0, 2, 0, 0)
         stats_grid.setHorizontalSpacing(7)
@@ -249,6 +256,9 @@ class PartyCard(QGroupBox):
             "friendship_value": None,
             "friendship_display_state": None,
             "friendship_bar_compact": None,
+            "moves_heading": moves_heading,
+            "moves_list": moves_list,
+            "moves_display_state": None,
             "stat_names": stat_names,
             "stat_values": stat_values,
             "iv_values": iv_values,

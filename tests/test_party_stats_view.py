@@ -133,7 +133,18 @@ def test_party_stats_renders_friendship_and_debug_value(make_window) -> None:
     window = make_window()
     window.set_tracker_view("stats")
     party_state = decode_party(
-        _party_payload((_party_record(3, 183, 47, attack=27, friendship=164),))
+        _party_payload(
+            (
+                _party_record(
+                    3,
+                    183,
+                    47,
+                    attack=27,
+                    friendship=164,
+                    moves=(98, 45, 0, 1),
+                ),
+            )
+        )
     )
 
     window._refresh_tracker_party(True, party_state)
@@ -144,7 +155,32 @@ def test_party_stats_renders_friendship_and_debug_value(make_window) -> None:
     assert card["friendship"].text() == "Friendship: 164 / 255 • High"
     assert card["friendship_bar"].maximum() == 255
     assert card["friendship_bar"].value() == 164
+    assert card["moves_list"].text().splitlines() == ["Quick Attack", "Growl", "Pound"]
     assert "Friendship: 164" in window.ram_party_details.toPlainText()
+    window.close()
+
+
+def test_party_stats_moves_update_live_from_ram(make_window) -> None:
+    window = make_window()
+    window.set_tracker_view("stats")
+    first = decode_party(
+        _party_payload(
+            (_party_record(3, 183, 47, attack=27, moves=(98, 45, 0, 1)),)
+        )
+    )
+    updated = decode_party(
+        _party_payload(
+            (_party_record(3, 183, 47, attack=27, moves=(85, 44, 0, 1)),)
+        )
+    )
+
+    window._refresh_tracker_party(True, first)
+    card = window.tracker_party_cards[1]
+    original_label = card["moves_list"]
+    window._refresh_tracker_party(True, updated)
+
+    assert card["moves_list"] is original_label
+    assert card["moves_list"].text().splitlines() == ["Thunderbolt", "Bite", "Pound"]
     window.close()
 
 
@@ -287,11 +323,15 @@ def _party_record(
     met_location_id: int = 0,
     met_level: int = 0,
     friendship: int = 0,
+    moves: tuple[int, int, int, int] = (0, 0, 0, 0),
 ) -> bytes:
     box = bytearray(BOX_DATA_SIZE)
     box[0:2] = species_id.to_bytes(2, "little")
     box[0x0C] = friendship
     box[0x0D] = ability_id
+    for index, move_id in enumerate(moves):
+        offset = 0x20 + index * 2
+        box[offset : offset + 2] = move_id.to_bytes(2, "little")
     box[0x3E:0x40] = met_location_id.to_bytes(2, "little")
     box[0x57] = 12
     box[0x7C] = met_level

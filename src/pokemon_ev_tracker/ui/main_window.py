@@ -410,7 +410,7 @@ class MainWindow(QMainWindow):
         columns = min(max(int(member_count), 1), 3)
         width = max(320, 250 * columns + 24)
         rows = 1 if member_count <= 3 else 2
-        card_height = 300 if self.tracker_view == "training" else 255
+        card_height = 300 if self.tracker_view == "training" else 320
         height = 120 + rows * card_height + self.current_opponent_panel.sizeHint().height()
         self.resize(width, height)
 
@@ -628,6 +628,7 @@ class MainWindow(QMainWindow):
                 f"{pokemon.max_hp if pokemon.max_hp is not None else '--'}"
             )
             self._refresh_tracker_stats_metadata(card, pokemon)
+            self._refresh_tracker_moves(card, pokemon)
             stats = pokemon.current_stats
             current_values = {
                 "hp": stats.max_hp if stats is not None else None,
@@ -726,6 +727,19 @@ class MainWindow(QMainWindow):
             else:
                 text = f"Friendship: {friendship} / 255 • {friendship_label(friendship)}"
             card["friendship"].setText(text)
+
+    def _refresh_tracker_moves(self, card: dict[str, object], pokemon) -> None:
+        state = (pokemon.checksum_valid, pokemon.moves)
+        if card["moves_display_state"] == state:
+            return
+        card["moves_display_state"] = state
+        if not pokemon.checksum_valid:
+            text = "Unavailable (checksum invalid)"
+        elif pokemon.moves:
+            text = "\n".join(pokemon.moves)
+        else:
+            text = "No moves learned"
+        card["moves_list"].setText(text)
 
     def _refresh_tracker_target_display(self, card: dict[str, object], pokemon) -> None:
         pid = pokemon.decoded.diagnostics.pid

@@ -38,12 +38,14 @@ def test_view_shows_platinum_encounters_and_next_cap(nuzlocke_view) -> None:
     assert view.encounters_table.item(0, 0).text() == "Starter"
     assert view.encounters_table.item(0, 1).text() == ""
     assert view.encounters_table.cellWidget(0, 1).currentText() == "Not encountered"
-    assert view.next_cap_label.text() == "Roark  ·  Lv. 14"
+    assert view.next_cap_label.text() == "Barry - Route 201  ·  Lv. 5"
+    assert view.healing_item_hint_label.text() == "Opponent healing items: none"
 
     view._complete_next_cap()
     assert run.completed_cap_ids == [PLATINUM_NUZLOCKE_PROFILE.level_caps[0].cap_id]
-    assert view.next_cap_label.text().startswith("Mars - Valley Windworks")
-    assert "1 / 19" in view.cap_progress_label.text()
+    assert view.next_cap_label.text() == "Barry - Route 203  ·  Lv. 9"
+    assert view.healing_item_hint_label.text() == "Opponent healing items: none"
+    assert "1 / 24" in view.cap_progress_label.text()
 
 
 def test_encounter_status_filter_and_death_count_render(nuzlocke_view) -> None:
@@ -67,7 +69,10 @@ def test_party_levels_only_drive_read_only_over_cap_warning(nuzlocke_view) -> No
     members = (PartyLevel("sparky", "Shinx", 15), PartyLevel("", "Starly", 14))
     view.set_party_levels(members)
 
-    assert "Over current cap (14): sparky (Shinx) Lv. 15" == view.party_warning_label.text()
+    assert (
+        "Over current cap (5): sparky (Shinx) Lv. 15, Starly Lv. 14"
+        == view.party_warning_label.text()
+    )
     assert view.party_levels == members
 
 
@@ -77,7 +82,7 @@ def test_level_cap_override_changes_warning_threshold(nuzlocke_view) -> None:
     store.set_level_cap_override(run.run_id, PLATINUM_NUZLOCKE_PROFILE.level_caps[0].cap_id, 16)
     view.set_party_levels((PartyLevel("", "Shinx", 15),))
 
-    assert view.next_cap_label.text() == "Roark  ·  Lv. 16"
+    assert view.next_cap_label.text() == "Barry - Route 201  ·  Lv. 16"
     assert view.party_warning_label.text() == "No party members are above the current cap."
 
 

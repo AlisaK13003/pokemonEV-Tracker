@@ -21,3 +21,7 @@ The bundled Platinum ability-slot lookup is based on PKHeX's [Generation IV pers
 ## Offline EV-Yield Lookup Data
 
 The bundled species EV-yield values are derived from PokeAPI's [`pokemon.csv`](https://github.com/PokeAPI/pokeapi/blob/master/data/v2/csv/pokemon.csv) and [`pokemon_stats.csv`](https://github.com/PokeAPI/pokeapi/blob/master/data/v2/csv/pokemon_stats.csv), filtered to default species IDs 1-493. They are stored locally; the application makes no runtime API requests. The displayed values are base species yields and may be modified in-game by effects such as held items or Pokérus.
+
+## Offline Move-Name Lookup Data
+
+The bundled move-name lookup is derived from PokeAPI's [`moves.csv`](https://github.com/PokeAPI/pokeapi/blob/master/data/v2/csv/moves.csv), filtered to Generation IV move IDs 1-467 and normalized for display, with Generation IV spellings retained where they differ. The names are stored locally; the application makes no runtime API requests.

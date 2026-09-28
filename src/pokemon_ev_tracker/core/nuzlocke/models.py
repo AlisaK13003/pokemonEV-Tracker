@@ -32,10 +32,22 @@ class LevelCap:
     category: str
     order: int
     level_cap: int
+    healing_items: tuple[tuple[str, int], ...] | None = None
 
     def __post_init__(self) -> None:
         if isinstance(self.level_cap, bool) or not 1 <= self.level_cap <= 100:
             raise ValueError("Level cap must be between 1 and 100.")
+        if self.healing_items is not None and any(
+            not name.strip() or isinstance(count, bool) or count < 1
+            for name, count in self.healing_items
+        ):
+            raise ValueError("Healing items must have a name and a positive count.")
+
+    @property
+    def healing_item_count(self) -> int | None:
+        if self.healing_items is None:
+            return None
+        return sum(count for _name, count in self.healing_items)
 
 
 @dataclass(frozen=True)

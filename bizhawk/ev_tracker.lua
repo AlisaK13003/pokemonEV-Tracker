@@ -5,6 +5,10 @@ local HOST = "127.0.0.1"
 local PORT = 46387
 local HEARTBEAT_INTERVAL = 120
 local PARTY_INTERVAL = 30
+local DOMAIN_REFRESH_INTERVAL = 600
+local CONNECT_RETRY_INTERVAL = 300
+local CONNECT_TIMEOUT_SECONDS = 0.03
+local MAX_FALLBACK_BYTES = 512 * 1024
 local TEMP_ROOT = os.getenv("TEMP") or os.getenv("TMP") or os.getenv("TMPDIR")
 local FALLBACK_FILE = TEMP_ROOT and (TEMP_ROOT .. "\\ev_tracker_bizhawk.jsonl") or nil
 local MAIN_RAM_BASE = 0x02000000
@@ -26,6 +30,10 @@ local last_connect_attempt = -999999
 local last_domain_error = nil
 local warned_null_core = false
 local run_id = tostring(os.time()) .. "-" .. tostring(math.random(100000, 999999))
+local byte_hex = {}
+for value = 0, 255 do
+    byte_hex[value] = string.format("%02X", value)
+end
 
 local function json_escape(value)
     value = tostring(value or "")
@@ -201,6 +209,9 @@ local function read_u32_le(domain, offset)
         return nil
     end
     local ok, value = pcall(function()
+        if memory.read_u32_le ~= nil then
+            return memory.read_u32_le(offset, domain)
+        end
         memory.usememorydomain(domain)
         local b0 = memory.readbyte(offset)
         local b1 = memory.readbyte(offset + 1)
@@ -214,22 +225,53 @@ local function read_u32_le(domain, offset)
     return nil
 end
 
-local function read_bytes_hex(domain, offset, length)
+local function read_bytes(domain, offset, length)
     if domain == nil or offset == nil then
         return nil
     end
-    local ok, result = pcall(function()
-        memory.usememorydomain(domain)
-        local parts = {}
-        for index = 0, length - 1 do
-            parts[index + 1] = string.format("%02X", memory.readbyte(offset + index))
+    if memory.read_bytes_as_binary_string ~= nil then
+        local ok, bytes = pcall(memory.read_bytes_as_binary_string, offset, length, domain)
+        if ok and bytes ~= nil then
+            return bytes
         end
-        return table.concat(parts)
-    end)
-    if ok then
-        return result
     end
-    return nil
+    if memory.read_bytes_as_array ~= nil then
+        local ok, bytes = pcall(memory.read_bytes_as_array, offset, length, domain)
+        if ok and bytes ~= nil then
+            return bytes
+        end
+    end
+
+    local ok, bytes = pcall(function()
+        memory.usememorydomain(domain)
+        local result = {}
+        for index = 0, length - 1 do
+            result[index + 1] = memory.readbyte(offset + index)
+        end
+        return result
+    end)
+    return ok and bytes or nil
+end
+
+local function read_bytes_hex(domain, offset, length)
+    local bytes = read_bytes(domain, offset, length)
+    if bytes == nil then
+        return nil
+    end
+    local parts = {}
+    for index = 1, length do
+        local value
+        if type(bytes) == "string" then
+            value = string.byte(bytes, index)
+        else
+            value = bytes[index]
+        end
+        if value == nil then
+            return nil
+        end
+        parts[index] = byte_hex[value]
+    end
+    return table.concat(parts)
 end
 
 local function party_memory_message(frame, domain)
@@ -315,7 +357,7 @@ local function ensure_client(frame)
     if client ~= nil then
         return true
     end
-    if frame - last_connect_attempt < 60 then
+    if frame - last_connect_attempt < CONNECT_RETRY_INTERVAL then
         return false
     end
 
@@ -324,7 +366,7 @@ local function ensure_client(frame)
     if not ok or tcp == nil then
         return false
     end
-    tcp:settimeout(0.15)
+    tcp:settimeout(CONNECT_TIMEOUT_SECONDS)
     local connected = tcp:connect(HOST, PORT)
     if connected == 1 or connected == true then
         tcp:settimeout(0)
@@ -341,6 +383,13 @@ local function write_fallback(line)
         return
     end
     local handle = io.open(FALLBACK_FILE, "a")
+    if handle ~= nil then
+        local size = handle:seek("end") or 0
+        if size >= MAX_FALLBACK_BYTES then
+            handle:close()
+            handle = io.open(FALLBACK_FILE, "w")
+        end
+    end
     if handle ~= nil then
         handle:write(line)
         handle:write("\n")
@@ -365,21 +414,29 @@ end
 
 local domains = domain_names()
 local active_domain = choose_main_ram_domain(domains)
-print("EV Tracker BizHawk RAM-1 starting.")
-print("Available memory domains:")
-for _, name in ipairs(domains) do
-    local size = domain_size(name)
-    local size_text = size and tostring(size) or "unknown"
-    print("  " .. name .. " (" .. size_text .. " bytes)")
-end
-print("Selected diagnostic domain: " .. tostring(active_domain))
-print("Fallback heartbeat file: " .. tostring(FALLBACK_FILE or "disabled (no temp path)"))
+print("EV Tracker RAM reader started; domain=" .. tostring(active_domain))
+
+local next_domain_refresh = get_frame_count() + DOMAIN_REFRESH_INTERVAL
+local last_domain_refresh_frame = get_frame_count()
+local domain_refresh_ticks = 0
+local last_heartbeat_frame = nil
+local last_party_frame = nil
 
 while true do
     local frame = get_frame_count()
-    if frame % HEARTBEAT_INTERVAL == 0 then
+    domain_refresh_ticks = domain_refresh_ticks + 1
+    if frame < last_domain_refresh_frame
+        or frame >= next_domain_refresh
+        or (active_domain == nil and domain_refresh_ticks >= HEARTBEAT_INTERVAL) then
         domains = domain_names()
         active_domain = choose_main_ram_domain(domains)
+        last_domain_refresh_frame = frame
+        next_domain_refresh = frame + (active_domain and DOMAIN_REFRESH_INTERVAL or HEARTBEAT_INTERVAL)
+        domain_refresh_ticks = 0
+    end
+
+    if frame ~= last_heartbeat_frame and frame % HEARTBEAT_INTERVAL == 0 then
+        last_heartbeat_frame = frame
         local reads = diagnostic_reads(active_domain)
         local message = json_object({
             {"type", "heartbeat"},
@@ -393,14 +450,10 @@ while true do
             {"connected", client ~= nil},
         })
         message = message:gsub("\"__READS__\"", "[" .. table.concat(reads, ",") .. "]")
-        local connected = send_line(message, frame)
-        print("EV Tracker heartbeat frame=" .. tostring(frame)
-            .. " domain=" .. tostring(active_domain)
-            .. " connected=" .. tostring(connected))
+        send_line(message, frame)
     end
-    if frame % PARTY_INTERVAL == 0 then
-        domains = domain_names()
-        active_domain = choose_main_ram_domain(domains)
+    if frame ~= last_party_frame and frame % PARTY_INTERVAL == 0 then
+        last_party_frame = frame
         local message = party_memory_message(frame, active_domain)
         send_line(message, frame)
     end

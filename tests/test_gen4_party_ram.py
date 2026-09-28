@@ -86,6 +86,22 @@ def test_decrypt_and_extract_evs_for_party_pokemon() -> None:
     assert decoded.current_hp == 44
 
 
+def test_gen4_move_slots_decode_and_resolve_to_platinum_names() -> None:
+    record = _party_record(
+        pid=0x12345678,
+        species_id=179,
+        evs=(0, 0, 0, 0, 0, 0),
+        moves=(98, 45, 0, 1),
+    )
+
+    decoded = decode_party_pokemon(record)
+    party = decode_party((1).to_bytes(4, "little") + record + bytes(PARTY_POKEMON_SIZE * 5))
+
+    assert decoded.diagnostics.checksum_valid
+    assert decoded.move_ids == (98, 45, 0, 1)
+    assert party.pokemon[0].moves == ("Quick Attack", "Growl", "Pound")
+
+
 @pytest.mark.parametrize("friendship", (0, 164, 255))
 def test_gen4_friendship_decodes_unsigned_byte_from_block_a(friendship: int) -> None:
     record = _party_record(
@@ -653,6 +669,7 @@ def _plain_box(
     is_egg: bool = False,
     has_nickname: bool = False,
     friendship: int = 0,
+    moves: tuple[int, int, int, int] = (0, 0, 0, 0),
 ) -> bytes:
     hp, attack, defense, speed, special_attack, special_defense = evs
     data = bytearray(BOX_DATA_SIZE)
@@ -662,6 +679,9 @@ def _plain_box(
     data[0x0D] = ability_id
     data[0x08:0x0C] = (125000).to_bytes(4, "little")
     data[0x10:0x16] = bytes((hp, attack, defense, speed, special_attack, special_defense))
+    for index, move_id in enumerate(moves):
+        offset = 0x20 + index * 2
+        data[offset : offset + 2] = move_id.to_bytes(2, "little")
     hp_iv, attack_iv, defense_iv, speed_iv, special_attack_iv, special_defense_iv = ivs
     packed_ivs = (
         hp_iv
@@ -703,6 +723,7 @@ def _party_record(
     special_attack_stat: int = 65,
     special_defense_stat: int = 65,
     friendship: int = 0,
+    moves: tuple[int, int, int, int] = (0, 0, 0, 0),
 ) -> bytes:
     if nickname is not None:
         nickname_codes = _encode_gen4_nickname(nickname)
@@ -717,6 +738,7 @@ def _party_record(
         is_egg,
         has_nickname,
         friendship,
+        moves,
     )
     checksum = calculate_checksum(plain)
     encrypted = encrypt_box_data(plain, pid, checksum)
