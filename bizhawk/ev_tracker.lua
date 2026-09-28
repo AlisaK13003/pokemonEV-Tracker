@@ -27,6 +27,9 @@ end)
 
 local client = nil
 local last_connect_attempt = -999999
+local pending_tcp_line = nil
+local pending_tcp_offset = 1
+local queued_tcp_line = nil
 local last_domain_error = nil
 local warned_null_core = false
 local run_id = tostring(os.time()) .. "-" .. tostring(math.random(100000, 999999))
@@ -397,16 +400,62 @@ local function write_fallback(line)
     end
 end
 
-local function send_line(line, frame)
-    if ensure_client(frame) and client ~= nil then
-        local ok = pcall(function()
-            client:send(line .. "\n")
-        end)
-        if ok then
-            return true
+local function flush_tcp()
+    if client == nil then
+        return
+    end
+    if pending_tcp_line == nil and queued_tcp_line ~= nil then
+        pending_tcp_line = queued_tcp_line
+        pending_tcp_offset = 1
+        queued_tcp_line = nil
+    end
+    if pending_tcp_line == nil then
+        return
+    end
+
+    local ok, sent, send_error, last_sent = pcall(function()
+        return client:send(pending_tcp_line, pending_tcp_offset)
+    end)
+    if not ok then
+        send_error = sent
+        sent = nil
+        last_sent = nil
+    end
+    if sent ~= nil then
+        pending_tcp_line = nil
+        pending_tcp_offset = 1
+    elseif send_error == "timeout" then
+        pending_tcp_offset = (last_sent or (pending_tcp_offset - 1)) + 1
+        if pending_tcp_offset > #pending_tcp_line then
+            pending_tcp_line = nil
+            pending_tcp_offset = 1
         end
+    else
         pcall(function() client:close() end)
         client = nil
+        if pending_tcp_line ~= nil then
+            write_fallback(pending_tcp_line:sub(1, -2))
+        end
+        if queued_tcp_line ~= nil then
+            write_fallback(queued_tcp_line:sub(1, -2))
+        end
+        pending_tcp_line = nil
+        pending_tcp_offset = 1
+        queued_tcp_line = nil
+    end
+end
+
+local function send_line(line, frame)
+    if ensure_client(frame) and client ~= nil then
+        local data = line .. "\n"
+        if pending_tcp_line == nil then
+            pending_tcp_line = data
+            pending_tcp_offset = 1
+        else
+            queued_tcp_line = data
+        end
+        flush_tcp()
+        return true
     end
     write_fallback(line)
     return false
@@ -424,6 +473,7 @@ local last_party_frame = nil
 
 while true do
     local frame = get_frame_count()
+    flush_tcp()
     domain_refresh_ticks = domain_refresh_ticks + 1
     if frame < last_domain_refresh_frame
         or frame >= next_domain_refresh
