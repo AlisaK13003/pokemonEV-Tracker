@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+
 from pokemon_ev_tracker.data_sources.bizhawk import BizHawkRamDataSource
 from pokemon_ev_tracker.games.platinum.decoder import decode_party, nickname_is_default
 from pokemon_ev_tracker.games.platinum.memory import PLATINUM_US
@@ -19,6 +21,8 @@ from pokemon_ev_tracker.pokemon.gen4.crypto import (
 from pokemon_ev_tracker.pokemon.gen4.ivs import decode_individual_values
 from pokemon_ev_tracker.pokemon.gen4.nature import nature_from_pid
 from pokemon_ev_tracker.pokemon.gen4.structure import (
+    FRIENDSHIP_BOX_DATA_OFFSET,
+    FRIENDSHIP_RECORD_OFFSET,
     HELD_ITEM_BOX_DATA_OFFSET,
     HELD_ITEM_RECORD_OFFSET,
     PARTY_POKEMON_SIZE,
@@ -80,6 +84,74 @@ def test_decrypt_and_extract_evs_for_party_pokemon() -> None:
     assert decoded.evs.total == 64
     assert decoded.level == 18
     assert decoded.current_hp == 44
+
+
+@pytest.mark.parametrize("friendship", (0, 164, 255))
+def test_gen4_friendship_decodes_unsigned_byte_from_block_a(friendship: int) -> None:
+    record = _party_record(
+        pid=0x12345678,
+        species_id=179,
+        evs=(0, 0, 0, 0, 0, 0),
+        friendship=friendship,
+    )
+
+    decoded = decode_party_pokemon(record)
+    party = decode_party(
+        (1).to_bytes(4, "little") + record + bytes(PARTY_POKEMON_SIZE * 5)
+    )
+
+    assert decoded.diagnostics.checksum_valid
+    assert decoded.friendship == friendship
+    assert party.pokemon[0].friendship == friendship
+    assert FRIENDSHIP_RECORD_OFFSET == 0x14
+    assert FRIENDSHIP_BOX_DATA_OFFSET == 0x0C
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    (
+        (0, "Very Low"),
+        (49, "Very Low"),
+        (50, "Low"),
+        (99, "Low"),
+        (100, "Neutral"),
+        (149, "Neutral"),
+        (150, "High"),
+        (199, "High"),
+        (200, "Very High"),
+        (254, "Very High"),
+        (255, "Max"),
+    ),
+)
+def test_friendship_label_boundaries(value: int, expected: str) -> None:
+    from pokemon_ev_tracker.pokemon.gen4.friendship import friendship_label
+
+    assert friendship_label(value) == expected
+
+
+def test_pokemon_stable_identity_ignores_evolution_level_evs_item_and_nickname() -> None:
+    original = decode_party_pokemon(
+        _party_record(
+            pid=0x12345678,
+            species_id=393,
+            evs=(0, 0, 0, 0, 0, 0),
+            level=5,
+            nickname="piplup",
+            held_item_id=0,
+        )
+    )
+    evolved = decode_party_pokemon(
+        _party_record(
+            pid=0x12345678,
+            species_id=394,
+            evs=(4, 12, 0, 0, 0, 8),
+            level=18,
+            nickname="plip",
+            held_item_id=112,
+        )
+    )
+
+    assert original.stable_id == evolved.stable_id
 
 
 def test_iv_bitfield_decoding_keeps_gen4_flags_separate() -> None:
@@ -580,11 +652,13 @@ def _plain_box(
     ivs: tuple[int, int, int, int, int, int] = (0, 0, 0, 0, 0, 0),
     is_egg: bool = False,
     has_nickname: bool = False,
+    friendship: int = 0,
 ) -> bytes:
     hp, attack, defense, speed, special_attack, special_defense = evs
     data = bytearray(BOX_DATA_SIZE)
     data[0x00:0x02] = species_id.to_bytes(2, "little")
     data[0x02:0x04] = held_item_id.to_bytes(2, "little")
+    data[FRIENDSHIP_BOX_DATA_OFFSET] = friendship
     data[0x0D] = ability_id
     data[0x08:0x0C] = (125000).to_bytes(4, "little")
     data[0x10:0x16] = bytes((hp, attack, defense, speed, special_attack, special_defense))
@@ -628,6 +702,7 @@ def _party_record(
     speed_stat: int = 45,
     special_attack_stat: int = 65,
     special_defense_stat: int = 65,
+    friendship: int = 0,
 ) -> bytes:
     if nickname is not None:
         nickname_codes = _encode_gen4_nickname(nickname)
@@ -641,6 +716,7 @@ def _party_record(
         ivs,
         is_egg,
         has_nickname,
+        friendship,
     )
     checksum = calculate_checksum(plain)
     encrypted = encrypt_box_data(plain, pid, checksum)

@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QApplication
 
 from pokemon_ev_tracker.config.settings import AppSettings
 from pokemon_ev_tracker.core.ev_targets import EVTargetStore
+from pokemon_ev_tracker.core.nuzlocke.storage import NuzlockeStore
 from pokemon_ev_tracker.data_sources.bizhawk import BizHawkRamDataSource
 from pokemon_ev_tracker.ui.main_window import MainWindow
 from pokemon_ev_tracker.ui.party_layout import party_card_positions
@@ -25,7 +26,9 @@ def make_window(monkeypatch, tmp_path):
 
     def create(settings: AppSettings | None = None) -> MainWindow:
         window = MainWindow(
-            settings or AppSettings(), target_store=EVTargetStore(tmp_path / "ev_targets.json")
+            settings or AppSettings(),
+            target_store=EVTargetStore(tmp_path / "ev_targets.json"),
+            nuzlocke_store=NuzlockeStore(tmp_path / "nuzlocke_runs.json"),
         )
         return window
 
@@ -46,6 +49,7 @@ def test_compact_mode_sets_always_on_top_hides_debug_and_restores_normal(make_wi
     assert window.main_tabs.currentIndex() == 0
     assert window.main_tabs.tabBar().isHidden()
     assert not window.main_tabs.isTabVisible(1)
+    assert not window.main_tabs.isTabVisible(2)
     assert window.settings.normal_window_geometry == normal_geometry
     assert window.tracker_title.isHidden()
     assert not window.compact_status_label.isHidden()
@@ -56,6 +60,7 @@ def test_compact_mode_sets_always_on_top_hides_debug_and_restores_normal(make_wi
     assert not window.windowFlags() & Qt.WindowType.WindowStaysOnTopHint
     assert not window.main_tabs.tabBar().isHidden()
     assert window.main_tabs.isTabVisible(1)
+    assert window.main_tabs.isTabVisible(2)
     assert window.main_tabs.currentIndex() == 1
     assert window._current_window_geometry() == normal_geometry
     window.close()
@@ -225,4 +230,18 @@ def test_party_stats_compact_mode_keeps_stats_visible_and_log_hidden(make_window
     assert window.tracker_party_cards[1]["training_content"].isHidden()
     assert window.ev_change_log.isHidden()
     assert window.compact_mode
+    window.close()
+
+
+def test_compact_mode_hides_nuzlocke_and_restores_its_tab(make_window) -> None:
+    window = make_window()
+    window.main_tabs.setCurrentIndex(2)
+
+    window.set_compact_mode(True)
+    assert not window.main_tabs.isTabVisible(2)
+    assert window.main_tabs.currentIndex() == 0
+
+    window.set_compact_mode(False)
+    assert window.main_tabs.isTabVisible(2)
+    assert window.main_tabs.currentIndex() == 2
     window.close()

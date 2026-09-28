@@ -26,6 +26,21 @@ IVS_BOX_DATA_OFFSET = IVS_RECORD_OFFSET - POKEMON_HEADER_SIZE
 NICKNAME_RECORD_OFFSET = 0x48
 NICKNAME_BOX_DATA_OFFSET = NICKNAME_RECORD_OFFSET - POKEMON_HEADER_SIZE
 NICKNAME_FIELD_SIZE = 0x16
+# PKHeX's PK4 fields include the 8-byte header; decrypted payload offsets subtract it.
+MET_LOCATION_EXTENDED_RECORD_OFFSET = 0x46
+MET_LOCATION_EXTENDED_BOX_DATA_OFFSET = MET_LOCATION_EXTENDED_RECORD_OFFSET - POKEMON_HEADER_SIZE
+EGG_LOCATION_EXTENDED_RECORD_OFFSET = 0x44
+EGG_LOCATION_EXTENDED_BOX_DATA_OFFSET = EGG_LOCATION_EXTENDED_RECORD_OFFSET - POKEMON_HEADER_SIZE
+ORIGIN_GAME_RECORD_OFFSET = 0x5F
+ORIGIN_GAME_BOX_DATA_OFFSET = ORIGIN_GAME_RECORD_OFFSET - POKEMON_HEADER_SIZE
+MET_DATE_RECORD_OFFSET = 0x7B
+MET_DATE_BOX_DATA_OFFSET = MET_DATE_RECORD_OFFSET - POKEMON_HEADER_SIZE
+MET_LOCATION_DP_RECORD_OFFSET = 0x80
+MET_LOCATION_DP_BOX_DATA_OFFSET = MET_LOCATION_DP_RECORD_OFFSET - POKEMON_HEADER_SIZE
+MET_LEVEL_RECORD_OFFSET = 0x84
+MET_LEVEL_BOX_DATA_OFFSET = MET_LEVEL_RECORD_OFFSET - POKEMON_HEADER_SIZE
+FRIENDSHIP_RECORD_OFFSET = 0x14
+FRIENDSHIP_BOX_DATA_OFFSET = FRIENDSHIP_RECORD_OFFSET - POKEMON_HEADER_SIZE
 
 _GEN4_INTL_CHARACTERS = (
     "\0　ぁあぃいぅうぇえぉおかがきぎ"
@@ -116,9 +131,26 @@ class NicknameDiagnostics:
 
 
 @dataclass(frozen=True)
+class AcquisitionMetadataDiagnostics:
+    met_location_record_offset: int
+    met_location_box_data_offset: int
+    egg_location_record_offset: int
+    egg_location_box_data_offset: int
+    origin_game_record_offset: int
+    origin_game_box_data_offset: int
+    met_date_record_offset: int
+    met_date_box_data_offset: int
+    met_location_dp_record_offset: int
+    met_location_dp_box_data_offset: int
+    met_level_record_offset: int
+    met_level_box_data_offset: int
+
+
+@dataclass(frozen=True)
 class DecodedPokemon:
     species_id: int
     held_item_id: int
+    friendship: int
     experience: int
     evs: EVs
     level: int | None
@@ -134,6 +166,15 @@ class DecodedPokemon:
     current_stats: CurrentStats
     nickname: str | None
     nickname_diagnostics: NicknameDiagnostics
+    met_location_id: int
+    met_location_dp_id: int
+    egg_location_id: int
+    origin_game: int
+    met_level: int | None
+    met_date: tuple[int, int, int] | None
+    is_egg: bool
+    stable_id: str
+    acquisition_metadata_diagnostics: AcquisitionMetadataDiagnostics
     diagnostics: PokemonDiagnostics
 
 
@@ -156,6 +197,7 @@ def decode_party_pokemon(
     held_item_id = int.from_bytes(
         decrypted[HELD_ITEM_BOX_DATA_OFFSET : HELD_ITEM_BOX_DATA_OFFSET + 2], "little"
     )
+    friendship = decrypted[FRIENDSHIP_BOX_DATA_OFFSET]
     experience = int.from_bytes(decrypted[0x08:0x0C], "little")
     nature = nature_from_pid(pid)
     ability_id = decrypted[ABILITY_BOX_DATA_OFFSET]
@@ -175,6 +217,29 @@ def decode_party_pokemon(
         NICKNAME_BOX_DATA_OFFSET : NICKNAME_BOX_DATA_OFFSET + NICKNAME_FIELD_SIZE
     ]
     nickname_diagnostics = _decode_nickname(nickname_raw, address)
+    met_location_id = int.from_bytes(
+        decrypted[
+            MET_LOCATION_EXTENDED_BOX_DATA_OFFSET : MET_LOCATION_EXTENDED_BOX_DATA_OFFSET + 2
+        ],
+        "little",
+    )
+    met_location_dp_id = int.from_bytes(
+        decrypted[MET_LOCATION_DP_BOX_DATA_OFFSET : MET_LOCATION_DP_BOX_DATA_OFFSET + 2],
+        "little",
+    )
+    egg_location_id = int.from_bytes(
+        decrypted[
+            EGG_LOCATION_EXTENDED_BOX_DATA_OFFSET : EGG_LOCATION_EXTENDED_BOX_DATA_OFFSET + 2
+        ],
+        "little",
+    )
+    origin_game = decrypted[ORIGIN_GAME_BOX_DATA_OFFSET]
+    met_level_value = decrypted[MET_LEVEL_BOX_DATA_OFFSET] & 0x7F
+    met_level = met_level_value or None
+    raw_met_date = decrypted[MET_DATE_BOX_DATA_OFFSET : MET_DATE_BOX_DATA_OFFSET + 3]
+    met_date = tuple(raw_met_date) if len(raw_met_date) == 3 and any(raw_met_date) else None
+    trainer_id = int.from_bytes(decrypted[0x04:0x06], "little")
+    secret_id = int.from_bytes(decrypted[0x06:0x08], "little")
     level = battle_stats[0x04]
     current_hp = int.from_bytes(battle_stats[0x06:0x08], "little")
     max_hp = int.from_bytes(battle_stats[0x08:0x0A], "little")
@@ -191,6 +256,7 @@ def decode_party_pokemon(
     return DecodedPokemon(
         species_id=species_id,
         held_item_id=held_item_id,
+        friendship=friendship,
         experience=experience,
         evs=evs,
         level=level,
@@ -206,6 +272,28 @@ def decode_party_pokemon(
         current_stats=current_stats,
         nickname=nickname_diagnostics.decoded_string,
         nickname_diagnostics=nickname_diagnostics,
+        met_location_id=met_location_id,
+        met_location_dp_id=met_location_dp_id,
+        egg_location_id=egg_location_id,
+        origin_game=origin_game,
+        met_level=met_level,
+        met_date=met_date,
+        is_egg=ivs.is_egg,
+        stable_id=f"pid:{pid:08X}:ot:{trainer_id:04X}:{secret_id:04X}",
+        acquisition_metadata_diagnostics=AcquisitionMetadataDiagnostics(
+            met_location_record_offset=MET_LOCATION_EXTENDED_RECORD_OFFSET,
+            met_location_box_data_offset=MET_LOCATION_EXTENDED_BOX_DATA_OFFSET,
+            egg_location_record_offset=EGG_LOCATION_EXTENDED_RECORD_OFFSET,
+            egg_location_box_data_offset=EGG_LOCATION_EXTENDED_BOX_DATA_OFFSET,
+            origin_game_record_offset=ORIGIN_GAME_RECORD_OFFSET,
+            origin_game_box_data_offset=ORIGIN_GAME_BOX_DATA_OFFSET,
+            met_date_record_offset=MET_DATE_RECORD_OFFSET,
+            met_date_box_data_offset=MET_DATE_BOX_DATA_OFFSET,
+            met_location_dp_record_offset=MET_LOCATION_DP_RECORD_OFFSET,
+            met_location_dp_box_data_offset=MET_LOCATION_DP_BOX_DATA_OFFSET,
+            met_level_record_offset=MET_LEVEL_RECORD_OFFSET,
+            met_level_box_data_offset=MET_LEVEL_BOX_DATA_OFFSET,
+        ),
         diagnostics=PokemonDiagnostics(
             address=address,
             pid=pid,

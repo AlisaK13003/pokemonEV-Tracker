@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 from pokemon_ev_tracker.games.platinum.abilities import get_platinum_ability
 from pokemon_ev_tracker.games.platinum.items import get_gen4_item_name
+from pokemon_ev_tracker.games.platinum.locations import platinum_met_location_name
 from pokemon_ev_tracker.games.platinum.species import Species, load_gen4_species
 from pokemon_ev_tracker.pokemon.gen4.structure import (
     PARTY_POKEMON_SIZE,
@@ -25,11 +26,20 @@ class PartyPokemon:
     nickname: str
     held_item_id: int
     held_item_name: str | None
+    friendship: int
     level: int | None
     current_hp: int | None
     max_hp: int | None
     evs: Mapping[str, int]
     ev_total: int
+    met_location_id: int
+    met_location_name: str | None
+    egg_location_id: int
+    origin_game: int
+    met_level: int | None
+    met_date: tuple[int, int, int] | None
+    is_egg: bool
+    stable_id: str
     checksum_valid: bool
     decoded: DecodedPokemon
     nature_id: int
@@ -112,11 +122,20 @@ def decode_party(
                 nickname=decoded.nickname or species,
                 held_item_id=decoded.held_item_id,
                 held_item_name=get_gen4_item_name(decoded.held_item_id),
+                friendship=decoded.friendship,
                 level=decoded.level,
                 current_hp=decoded.current_hp,
                 max_hp=decoded.max_hp,
                 evs=evs,
                 ev_total=decoded.evs.total,
+                met_location_id=decoded.met_location_id,
+                met_location_name=platinum_met_location_name(decoded.met_location_id),
+                egg_location_id=decoded.egg_location_id,
+                origin_game=decoded.origin_game,
+                met_level=decoded.met_level,
+                met_date=decoded.met_date,
+                is_egg=decoded.is_egg,
+                stable_id=decoded.stable_id,
                 checksum_valid=decoded.diagnostics.checksum_valid,
                 decoded=decoded,
                 nature_id=decoded.nature_id,

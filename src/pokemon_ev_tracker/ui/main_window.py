@@ -24,11 +24,24 @@ from PySide6.QtWidgets import (
 
 from pokemon_ev_tracker.core.ev_changes import EVChangeTracker
 from pokemon_ev_tracker.core.ev_targets import EVTargetStore
+from pokemon_ev_tracker.core.nuzlocke.acquisition import (
+    AcquisitionCandidate,
+    PartyAcquisitionObserver,
+)
+from pokemon_ev_tracker.core.nuzlocke.death_detection import PartyHpObserver, PartyHpSample
+from pokemon_ev_tracker.core.nuzlocke.models import PartyLevel
+from pokemon_ev_tracker.core.nuzlocke.storage import NuzlockeStore
 from pokemon_ev_tracker.data_sources.bizhawk import BizHawkRamDataSource
 from pokemon_ev_tracker.games.platinum.decoder import nickname_is_default
 from pokemon_ev_tracker.games.platinum.ev_yields import format_ev_yield
 from pokemon_ev_tracker.games.platinum.items import get_gen4_item_hint
+from pokemon_ev_tracker.games.platinum.locations import (
+    classify_platinum_acquisition,
+    platinum_nuzlocke_location_id,
+)
+from pokemon_ev_tracker.games.platinum.nuzlocke import PLATINUM_NUZLOCKE_PROFILE
 from pokemon_ev_tracker.games.platinum.profile import PLATINUM_PROFILE
+from pokemon_ev_tracker.pokemon.gen4.friendship import friendship_label
 from pokemon_ev_tracker.pokemon.gen4.structure import (
     HELD_ITEM_BOX_DATA_OFFSET,
     HELD_ITEM_RECORD_OFFSET,
@@ -44,6 +57,7 @@ from pokemon_ev_tracker.ui.item_sprite_loader import (
     item_sprite_path,
     item_sprite_slug,
 )
+from pokemon_ev_tracker.ui.nuzlocke_view import NuzlockeView
 from pokemon_ev_tracker.ui.opponent_panel import CurrentOpponentPanel
 from pokemon_ev_tracker.ui.party_card import SECONDARY_TEXT_COLOR, PartyCard, PartyGrid
 from pokemon_ev_tracker.ui.sprite_loader import (
@@ -59,18 +73,85 @@ def _format_optional_hex(value: int | None) -> str:
     return f"0x{value:08X}" if value is not None else "--"
 
 
+def _acquisition_candidate(pokemon) -> AcquisitionCandidate:
+    decoded = pokemon.decoded
+    nickname = decoded.nickname or ""
+    if nickname_is_default(nickname, pokemon.species):
+        nickname = ""
+    return AcquisitionCandidate(
+        stable_id=pokemon.stable_id,
+        species_id=pokemon.species_id,
+        species_name=pokemon.species,
+        nickname=nickname,
+        level=pokemon.level,
+        met_level=pokemon.met_level,
+        met_location_id=pokemon.met_location_id,
+        met_location_name=pokemon.met_location_name,
+        egg_location_id=pokemon.egg_location_id,
+        origin_game=pokemon.origin_game,
+        is_egg=pokemon.is_egg,
+    )
+
+
+def _valid_acquisition_snapshot(party_state) -> bool:
+    if (
+        party_state is None
+        or not party_state.party_count_valid
+        or party_state.error
+        or getattr(party_state, "live_read_warning", None)
+        or party_state.party_count != len(party_state.pokemon)
+    ):
+        return False
+    return all(
+        pokemon.checksum_valid and not getattr(pokemon, "sample_stale", False)
+        for pokemon in party_state.pokemon
+    )
+
+
+def _valid_death_snapshot(party_state, party_payload, stale_after: float) -> bool:
+    if not _valid_acquisition_snapshot(party_state) or party_payload is None:
+        return False
+    received_at = getattr(party_payload, "received_at", None)
+    if not isinstance(received_at, (int, float)) or time.monotonic() - received_at > stale_after:
+        return False
+    return all(
+        getattr(pokemon, "current_stats", None) is not None
+        and isinstance(getattr(pokemon, "current_hp", None), int)
+        and not isinstance(getattr(pokemon, "current_hp", None), bool)
+        and isinstance(getattr(pokemon, "max_hp", None), int)
+        and 1 <= pokemon.max_hp <= 714
+        and 0 <= pokemon.current_hp <= pokemon.max_hp
+        for pokemon in party_state.pokemon
+    )
+
+
+def _frame_number(payload) -> int | None:
+    value = payload.get("frame") if isinstance(payload, dict) else None
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
 class MainWindow(QMainWindow):
     def __init__(
         self,
         settings,
         data_source: BizHawkRamDataSource | None = None,
         target_store: EVTargetStore | None = None,
+        nuzlocke_store: NuzlockeStore | None = None,
     ) -> None:
         super().__init__()
         self.settings = settings
         self.profile = getattr(data_source, "profile", PLATINUM_PROFILE)
         self.ram_data_source = data_source or BizHawkRamDataSource(profile=self.profile)
         self.ev_target_store = target_store or EVTargetStore()
+        self.nuzlocke_view = NuzlockeView(
+            store=nuzlocke_store,
+            profiles=(PLATINUM_NUZLOCKE_PROFILE,),
+        )
+        self._acquisition_observer = PartyAcquisitionObserver()
+        self._party_hp_observer = PartyHpObserver()
         self.compact_mode = False
         self.tracker_view = "training"
         self._compact_member_count = -1
@@ -157,6 +238,8 @@ class MainWindow(QMainWindow):
         self.tracker_connection_message.setMinimumHeight(34)
         self.tracker_connection_message.setStyleSheet(f"color: {SECONDARY_TEXT_COLOR};")
         self.tracker_layout.addWidget(self.tracker_connection_message)
+        self.nuzlocke_view.move_ram_death_notification(tracker_page)
+        self.tracker_layout.addWidget(self.nuzlocke_view.ram_death_group)
         self.current_opponent_panel = CurrentOpponentPanel(tracker_page)
         self.tracker_layout.addWidget(self.current_opponent_panel)
 
@@ -241,6 +324,7 @@ class MainWindow(QMainWindow):
         debug_layout.addWidget(self.ram_party_summary_label)
         debug_layout.addWidget(self.ram_party_details, 1)
         self.main_tabs.addTab(debug_page, "RAM Debug")
+        self.main_tabs.addTab(self.nuzlocke_view, "Nuzlocke")
         root_layout.addWidget(self.main_tabs, 1)
         self.setCentralWidget(root)
 
@@ -280,6 +364,7 @@ class MainWindow(QMainWindow):
                 self.settings.normal_window_geometry = self._current_window_geometry()
             self.compact_mode = True
             self.main_tabs.setTabVisible(1, False)
+            self.main_tabs.setTabVisible(2, False)
             self.main_tabs.setCurrentIndex(0)
             self.main_tabs.tabBar().hide()
             self.tracker_title.hide()
@@ -294,6 +379,7 @@ class MainWindow(QMainWindow):
         else:
             self.compact_mode = False
             self.main_tabs.setTabVisible(1, True)
+            self.main_tabs.setTabVisible(2, True)
             self.main_tabs.tabBar().show()
             self.tracker_title.show()
             self.backend_status.details_widget.show()
@@ -302,10 +388,14 @@ class MainWindow(QMainWindow):
             self._root_layout.setContentsMargins(8, 7, 8, 7)
             self._root_layout.setSpacing(6)
             self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
-            self.main_tabs.setCurrentIndex(min(self._pre_compact_tab_index, 1))
+            self.main_tabs.setCurrentIndex(min(self._pre_compact_tab_index, 2))
             if self.settings.normal_window_geometry is not None:
                 self.setGeometry(*self.settings.normal_window_geometry)
         self.compact_mode_button.setChecked(enabled)
+        for card in self.tracker_party_cards.values():
+            pokemon = card["pokemon"]
+            if pokemon is not None:
+                self._refresh_tracker_stats_metadata(card, pokemon)
         self.ev_change_log.render(self._ev_history_records, self.compact_mode)
         # Changing window flags hides a visible QWidget; use its state from before
         # the transition so compact mode does not make the app disappear.
@@ -356,6 +446,62 @@ class MainWindow(QMainWindow):
         party_payload = snapshot.details.get("party_payload")
         battle_battlers = snapshot.details.get("battle_battlers", ())
         active_enemies = snapshot.details["active_enemy_battlers"]
+        acquisition_run = self.nuzlocke_view.store.active_run
+        acquisition_candidates = tuple(
+            _acquisition_candidate(pokemon) for pokemon in getattr(party_state, "pokemon", ())
+        )
+        valid_acquisition_snapshot = _valid_acquisition_snapshot(party_state)
+        try:
+            new_acquisitions = self._acquisition_observer.observe(
+                acquisition_candidates,
+                connected=snapshot.connected,
+                valid_snapshot=valid_acquisition_snapshot,
+                run=acquisition_run,
+                store=self.nuzlocke_view.store,
+                classify=classify_platinum_acquisition,
+            )
+        except OSError:
+            LOGGER.exception("Could not persist Nuzlocke acquisition observation")
+            new_acquisitions = ()
+        if new_acquisitions:
+            self.nuzlocke_view.refresh_acquisition_suggestions()
+        payload_data = party_payload.payload if party_payload is not None else {}
+        stale_after = getattr(
+            getattr(self.ram_data_source, "server", None), "stale_after_seconds", 5.0
+        )
+        valid_death_snapshot = _valid_death_snapshot(
+            party_state, party_payload, stale_after
+        )
+        hp_samples = tuple(
+            PartyHpSample(
+                stable_id=pokemon.stable_id,
+                species=pokemon.species,
+                nickname=_acquisition_candidate(pokemon).nickname,
+                level=pokemon.level,
+                current_hp=pokemon.current_hp,
+                met_location_id=pokemon.met_location_id,
+                met_location_name=pokemon.met_location_name,
+                met_level=pokemon.met_level,
+                origin_game=pokemon.origin_game,
+            )
+            for pokemon in getattr(party_state, "pokemon", ())
+        )
+        death_candidates = self._party_hp_observer.observe(
+            hp_samples,
+            connected=snapshot.connected,
+            valid_snapshot=valid_death_snapshot,
+            run_id=acquisition_run.run_id if acquisition_run else None,
+            stream_identity=tuple(
+                payload_data.get(key)
+                for key in ("run_id", "core", "domain", "pointer_value")
+            ),
+            frame=_frame_number(payload_data),
+        )
+        if death_candidates:
+            self.nuzlocke_view.receive_ram_death_candidates(
+                acquisition_run.run_id if acquisition_run else None,
+                death_candidates,
+            )
         age = max(0.0, time.monotonic() - heartbeat.received_at) if heartbeat else None
         self.backend_status.set_connection(
             snapshot.backend_name, snapshot.connected, heartbeat, age
@@ -369,8 +515,25 @@ class MainWindow(QMainWindow):
             party_payload,
             battle_battlers,
             active_enemies,
+            acquisition_run,
         )
         self._refresh_tracker_party(snapshot.connected, display_party_state)
+        nuzlocke_members = ()
+        if (
+            snapshot.connected
+            and display_party_state is not None
+            and display_party_state.party_count_valid
+        ):
+            nuzlocke_members = tuple(
+                PartyLevel(
+                    nickname=pokemon.nickname,
+                    species=pokemon.species,
+                    level=pokemon.level,
+                )
+                for pokemon in display_party_state.pokemon
+                if pokemon.checksum_valid and pokemon.level is not None
+            )
+        self.nuzlocke_view.set_party_levels(nuzlocke_members)
         opponent_summary = ", ".join(
             f"{battler.species} Lv{battler.level}" for battler in active_enemies
         ) or "(none)"
@@ -464,9 +627,7 @@ class MainWindow(QMainWindow):
                 f"HP {pokemon.current_hp if pokemon.current_hp is not None else '--'} / "
                 f"{pokemon.max_hp if pokemon.max_hp is not None else '--'}"
             )
-            card["nature"].setText(f"Nature: {pokemon.nature_name}")
-            ability_name = pokemon.ability_name or f"Unknown #{pokemon.ability_id}"
-            card["ability"].setText(f"Ability: {ability_name}")
+            self._refresh_tracker_stats_metadata(card, pokemon)
             stats = pokemon.current_stats
             current_values = {
                 "hp": stats.max_hp if stats is not None else None,
@@ -500,9 +661,6 @@ class MainWindow(QMainWindow):
                     color = "#d7dce2"
                 card["stat_names"][stat].setStyleSheet(f"color: {color};")
                 value_label.setStyleSheet(f"color: {color};")
-            if not pokemon.checksum_valid:
-                card["nature"].setText("Nature: --")
-                card["ability"].setText("Ability: --")
             if pokemon.sample_stale and pokemon.battle_stats_stale:
                 card["checksum"].setText("Showing last valid record; level/HP may be stale")
             elif pokemon.sample_stale:
@@ -533,6 +691,41 @@ class MainWindow(QMainWindow):
             card["total_bar"].setValue(max(0, min(510, total)) if total is not None else 0)
             self._refresh_tracker_target_display(card, pokemon)
             card["widget"].show()
+
+    def _refresh_tracker_stats_metadata(self, card: dict[str, object], pokemon) -> None:
+        compact = self.compact_mode
+        ability_name = pokemon.ability_name or f"Unknown #{pokemon.ability_id}"
+        if pokemon.checksum_valid:
+            card["nature"].setText(
+                f"{pokemon.nature_name} • {ability_name}"
+                if compact
+                else f"Nature: {pokemon.nature_name}"
+            )
+            card["ability"].setText(f"Ability: {ability_name}")
+            friendship = pokemon.friendship
+        else:
+            card["nature"].setText("Nature: -- • Ability: --" if compact else "Nature: --")
+            card["ability"].setText("Ability: --")
+            friendship = None
+
+        card["ability"].setVisible(not compact)
+        if card["friendship_bar_compact"] != compact:
+            card["friendship_bar"].setVisible(not compact)
+            card["friendship_bar_compact"] = compact
+        if card["friendship_value"] != friendship:
+            card["friendship_value"] = friendship
+            if friendship is not None:
+                card["friendship_bar"].setValue(friendship)
+        display_state = (friendship, compact)
+        if card["friendship_display_state"] != display_state:
+            card["friendship_display_state"] = display_state
+            if friendship is None:
+                text = "Friendship: -- / 255"
+            elif compact:
+                text = f"Friendship {friendship}"
+            else:
+                text = f"Friendship: {friendship} / 255 • {friendship_label(friendship)}"
+            card["friendship"].setText(text)
 
     def _refresh_tracker_target_display(self, card: dict[str, object], pokemon) -> None:
         pid = pokemon.decoded.diagnostics.pid
@@ -742,7 +935,12 @@ class MainWindow(QMainWindow):
         self._render_ev_history()
 
     def _refresh_ram_party_debug(
-        self, party_state, party_payload, battle_battlers=(), active_enemies=()
+        self,
+        party_state,
+        party_payload,
+        battle_battlers=(),
+        active_enemies=(),
+        acquisition_run=None,
     ) -> None:
         if party_state is None:
             self.ram_party_summary_label.setText("Party count: --")
@@ -830,6 +1028,43 @@ class MainWindow(QMainWindow):
         for pokemon in party_state.pokemon:
             diag = pokemon.decoded.diagnostics
             nickname = pokemon.decoded.nickname_diagnostics
+            acquisition = pokemon.decoded.acquisition_metadata_diagnostics
+            candidate = _acquisition_candidate(pokemon)
+            source, confidence, suggested_id = classify_platinum_acquisition(
+                candidate, acquisition_run
+            )
+            suggested_name = None
+            if suggested_id and acquisition_run:
+                suggested_name = acquisition_run.encounters.get(suggested_id)
+                suggested_name = suggested_name.location if suggested_name else None
+            elif suggested_id:
+                suggested_name = next(
+                    (
+                        location.name
+                        for location in PLATINUM_NUZLOCKE_PROFILE.locations
+                        if location.location_id == suggested_id
+                    ),
+                    None,
+                )
+            if suggested_id is None and source not in {"TRADE", "EGG"}:
+                suggested_id = platinum_nuzlocke_location_id(
+                    pokemon.met_location_id, PLATINUM_NUZLOCKE_PROFILE
+                )
+                suggested_name = next(
+                    (
+                        location.name
+                        for location in PLATINUM_NUZLOCKE_PROFILE.locations
+                        if location.location_id == suggested_id
+                    ),
+                    None,
+                )
+            already_observed = (
+                self.nuzlocke_view.store.has_observed_pokemon(
+                    acquisition_run.run_id, pokemon.stable_id
+                )
+                if acquisition_run
+                else False
+            )
             terminator = nickname.terminator_unit_index
             terminator_label = (
                 f"unit {terminator} (field byte +0x{terminator * 2:02X})"
@@ -841,6 +1076,7 @@ class MainWindow(QMainWindow):
                     f"Slot {pokemon.slot} - {pokemon.species}",
                     f"Address: {_format_optional_hex(diag.address)}",
                     f"PID: 0x{diag.pid:08X}",
+                    f"Stable Pokémon ID: {pokemon.stable_id}",
                     (
                         f"Checksum: {'VALID' if pokemon.checksum_valid else 'INVALID'} "
                         f"(stored 0x{diag.checksum:04X}, calculated 0x{diag.calculated_checksum:04X})"
@@ -849,6 +1085,7 @@ class MainWindow(QMainWindow):
                     f"Species ID: {pokemon.species_id}",
                     f"Nature ID: {pokemon.nature_id}",
                     f"Nature: {pokemon.nature_name}",
+                    f"Friendship: {pokemon.friendship}",
                     f"Nature increased stat: {pokemon.nature_increased_stat or '--'}",
                     f"Nature decreased stat: {pokemon.nature_decreased_stat or '--'}",
                     f"Ability slot: {pokemon.ability_slot or '--'}",
@@ -887,6 +1124,51 @@ class MainWindow(QMainWindow):
                     f"Nickname terminator: {terminator_label}",
                     f"Nickname decoded string: {nickname.decoded_string!r}",
                     f"Nickname final: {pokemon.nickname!r}",
+                    (
+                        f"Met location: ID {pokemon.met_location_id} "
+                        f"({pokemon.met_location_name or 'Unknown'})"
+                    ),
+                    (
+                        f"Met location extended offsets: record +0x{acquisition.met_location_record_offset:02X}, "
+                        f"decrypted box +0x{acquisition.met_location_box_data_offset:02X}, "
+                        f"absolute {_format_optional_hex(diag.address + acquisition.met_location_record_offset if diag.address is not None else None)}; "
+                        f"decrypted field bytes {pokemon.met_location_id.to_bytes(2, 'little').hex(' ').upper()}"
+                    ),
+                    (
+                        f"Met location DP-style ID: {pokemon.decoded.met_location_dp_id} "
+                        f"(record +0x{acquisition.met_location_dp_record_offset:02X}, "
+                        f"decrypted box +0x{acquisition.met_location_dp_box_data_offset:02X})"
+                    ),
+                    (
+                        f"Met level: {pokemon.met_level if pokemon.met_level is not None else '--'} "
+                        f"(record +0x{acquisition.met_level_record_offset:02X}, "
+                        f"decrypted box +0x{acquisition.met_level_box_data_offset:02X}, "
+                        f"raw 0x{pokemon.decoded.met_level or 0:02X})"
+                    ),
+                    (
+                        f"Egg location ID: {pokemon.egg_location_id} "
+                        f"(record +0x{acquisition.egg_location_record_offset:02X}, "
+                        f"decrypted box +0x{acquisition.egg_location_box_data_offset:02X}, "
+                        f"raw {pokemon.egg_location_id.to_bytes(2, 'little').hex(' ').upper()})"
+                    ),
+                    (
+                        f"Origin game ID: {pokemon.origin_game} "
+                        f"(record +0x{acquisition.origin_game_record_offset:02X}, "
+                        f"decrypted box +0x{acquisition.origin_game_box_data_offset:02X}, "
+                        f"raw 0x{pokemon.origin_game:02X})"
+                    ),
+                    (
+                        f"Met date (YY/MM/DD): {pokemon.met_date or '--'} "
+                        f"(record +0x{acquisition.met_date_record_offset:02X}, "
+                        f"decrypted box +0x{acquisition.met_date_box_data_offset:02X})"
+                    ),
+                    f"Is egg: {str(pokemon.is_egg).lower()}",
+                    f"Acquisition classification: {source} ({confidence.lower()} confidence)",
+                    f"Already observed in active run: {str(already_observed).lower()}",
+                    (
+                        f"Suggested Nuzlocke location: {suggested_name or '--'}"
+                        + (f" ({suggested_id})" if suggested_id else "")
+                    ),
                     f"Level: {pokemon.level if pokemon.level is not None else '--'}",
                     (
                         f"Current HP: {pokemon.current_hp if pokemon.current_hp is not None else '--'} / "

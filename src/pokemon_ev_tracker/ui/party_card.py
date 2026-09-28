@@ -168,8 +168,20 @@ class PartyCard(QGroupBox):
         nature.setStyleSheet("color: #d7dce2; font-weight: 600;")
         ability = QLabel("Ability: --")
         ability.setStyleSheet("color: #d7dce2;")
+        friendship = QLabel("Friendship: -- / 255")
+        friendship.setStyleSheet(f"color: {SECONDARY_TEXT_COLOR};")
+        friendship_bar = QProgressBar()
+        friendship_bar.setRange(0, 255)
+        friendship_bar.setTextVisible(False)
+        friendship_bar.setFixedHeight(5)
+        friendship_bar.setStyleSheet(
+            "QProgressBar { border: 0; background: palette(alternate-base); }"
+            "QProgressBar::chunk { background: palette(highlight); }"
+        )
         stats_layout.addWidget(nature)
         stats_layout.addWidget(ability)
+        stats_layout.addWidget(friendship)
+        stats_layout.addWidget(friendship_bar)
         stats_grid = QGridLayout()
         stats_grid.setContentsMargins(0, 2, 0, 0)
         stats_grid.setHorizontalSpacing(7)
@@ -232,6 +244,11 @@ class PartyCard(QGroupBox):
             "clear_target_button": clear_button,
             "nature": nature,
             "ability": ability,
+            "friendship": friendship,
+            "friendship_bar": friendship_bar,
+            "friendship_value": None,
+            "friendship_display_state": None,
+            "friendship_bar_compact": None,
             "stat_names": stat_names,
             "stat_values": stat_values,
             "iv_values": iv_values,

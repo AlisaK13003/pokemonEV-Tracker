@@ -14,6 +14,7 @@ from PySide6.QtWidgets import QApplication, QLabel
 
 from pokemon_ev_tracker.config.settings import AppSettings
 from pokemon_ev_tracker.core.ev_targets import EVTargetStore
+from pokemon_ev_tracker.core.nuzlocke.storage import NuzlockeStore
 from pokemon_ev_tracker.data_sources.base import DataSourceSnapshot
 from pokemon_ev_tracker.data_sources.bizhawk import BizHawkRamDataSource
 from pokemon_ev_tracker.games.platinum.battle import (
@@ -400,6 +401,7 @@ def test_main_window_binds_debug_opponents_to_visible_tracker_cards(
         AppSettings(),
         data_source=source,
         target_store=EVTargetStore(tmp_path / "targets.json"),
+        nuzlocke_store=NuzlockeStore(tmp_path / "nuzlocke_runs.json"),
     )
     if compact:
         window.set_compact_mode(True)

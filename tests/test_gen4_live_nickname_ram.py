@@ -68,3 +68,27 @@ def test_live_bizhawk_party_records_decode_complete_nicknames_and_diagnostics() 
         assert diagnostics.terminator_unit_index == 6
         assert diagnostics.decoded_string == pokemon.nickname
         assert diagnostics.decoded_characters[:6] == tuple(pokemon.nickname)
+
+    assert [
+        (pokemon.species, pokemon.met_location_id, pokemon.met_location_name, pokemon.met_level)
+        for pokemon in party.pokemon
+    ] == [
+        ("Spearow", 0x11, "Route 202", 4),
+        ("Mareep", 0x12, "Route 203", 5),
+        ("Gible", 0x10, "Route 201", 5),
+    ]
+    assert all(pokemon.origin_game == 12 for pokemon in party.pokemon)
+    assert all(pokemon.met_date == (26, 9, 26) for pokemon in party.pokemon)
+    assert all(pokemon.egg_location_id == 0 and not pokemon.is_egg for pokemon in party.pokemon)
+    assert [pokemon.stable_id for pokemon in party.pokemon] == [
+        "pid:D26FE535:ot:A500:2BE1",
+        "pid:150F68BD:ot:A500:2BE1",
+        "pid:7495EF12:ot:A500:2BE1",
+    ]
+    metadata = party.pokemon[0].decoded.acquisition_metadata_diagnostics
+    assert metadata.met_location_record_offset == 0x46
+    assert metadata.met_location_box_data_offset == 0x3E
+    assert metadata.met_level_record_offset == 0x84
+    assert metadata.met_level_box_data_offset == 0x7C
+    assert metadata.met_date_record_offset == 0x7B
+    assert metadata.met_date_box_data_offset == 0x73

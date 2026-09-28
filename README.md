@@ -9,6 +9,7 @@ A real-time Pokémon Platinum EV tracker that reads party data directly from Biz
 - Animated sprites with static Platinum sprites as fallback, plus held-item icons
 - Compact always-on-top mode for use beside EmuHawk
 - RAM diagnostics for the BizHawk connection and decoded party records
+- Nuzlocke run tracking with advisory party-acquisition suggestions; automatic detection requires the Pokémon to appear in the party, so captures sent directly to PC boxes are not detected
 
 ## Screenshots
 
